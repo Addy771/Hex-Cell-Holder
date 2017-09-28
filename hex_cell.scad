@@ -6,7 +6,7 @@
 // https://endless-sphere.com/forums/viewtopic.php?f=3&t=90058
 //
 // This file was created by Addy and is released as public domain
-// 09/26/2017 V1.1
+// 09/28/2017 V1.2
 
 
 // CONFIGURATION
@@ -14,15 +14,16 @@
 opening_dia = 10;   // Circular opening to expose cell 
 cell_dia = 18.5;    // Cell diameter
 wall = 1;           // Wall thickness around a single cell. Spacing between cells is twice this amount.
-holder_height = 8;  // 
+holder_height = 8;  // Total height of cell holder
+separation = 1;     // Separation between cell top and tab slots
 slot_height = 2;    // Height of all slots
 col_slot_width = 5; // Width of slots between rows
 row_slot_width = 8; // Width of slots along rows
 
 rect_style = 1;     // 1 for rectangular shape pack, 0 for rhombus
 mirrored = 0;       // 1 for mirrored model, 0 for normal. Useful for printing matching top/bottom pieces
-num_rows = 2;       
-num_cols = 4;
+num_rows = 3;       
+num_cols = 3;
 
 $fn = 50;       // Number of facets for circular parts.  
 extra = 0.1;    // enlarge hexes by this to make them overlap
@@ -148,8 +149,9 @@ module single_hex()
             cylinder(h=holder_height+2,d=opening_dia);
           
         // Cell space    
-        translate([0,0,-holder_height])
-            cylinder(h=2*(holder_height-slot_height),d=cell_dia);
+        //#translate([0,0,-holder_height])
+            //cylinder(h=2*(holder_height-slot_height),d=cell_dia);
+            cylinder(h=2 *(holder_height-slot_height-separation) ,d=cell_dia, center=true);
         
         // 1st column slot
         rotate([0,0,60])
