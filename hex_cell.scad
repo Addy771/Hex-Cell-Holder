@@ -6,28 +6,31 @@
 // https://endless-sphere.com/forums/viewtopic.php?f=3&t=90058
 //
 // This file was created by Addy and is released as public domain
-// 09/28/2017 V1.2
+// 11/29/2017 V1.3
+
+
 
 
 // CONFIGURATION
 
-opening_dia = 10;   // Circular opening to expose cell 
-cell_dia = 18.5;    // Cell diameter
-wall = 1;           // Wall thickness around a single cell. Spacing between cells is twice this amount.
-holder_height = 8;  // Total height of cell holder
-separation = 1;     // Separation between cell top and tab slots
+opening_dia = 12;   // Circular opening to expose cell 
+cell_dia = 18.2;    // Cell diameter (18.2 for 18650)
+wall = 0.8;           // Wall thickness around a single cell. Spacing between cells is twice this amount.
+holder_height = 10;  // Total height of cell holder
+separation = 1;   // Separation between cell top and tab slots
 slot_height = 2;    // Height of all slots
-col_slot_width = 5; // Width of slots between rows
+col_slot_width = 4; // Width of slots between rows
 row_slot_width = 8; // Width of slots along rows
 
 rect_style = 1;     // 1 for rectangular shape pack, 0 for rhombus
-mirrored = 0;       // 1 for mirrored model, 0 for normal. Useful for printing matching top/bottom pieces
-num_rows = 3;       
-num_cols = 3;
+part = "both";       // "normal","mirrored", or "both"  You'll want a mirrored piece if the tops and bottom are different
 
-$fn = 50;       // Number of facets for circular parts.  
+num_rows = 2;       
+num_cols = 8;
+
+$fn = 90;       // Number of facets for circular parts.  
 extra = 0.1;    // enlarge hexes by this to make them overlap
-
+spacing = 4;    // Spacing between top and bottom pieces when printing both pieces
 // END OF CONFIGURATION
 
 
@@ -36,10 +39,25 @@ hex_w = cell_dia + 2*wall;
 hex_pt = (hex_w/2 + extra) / cos(30);
 
 
-if (mirrored)
+if (part == "mirrored")
     mirror_pack();
+else if(part == "both")
+{
+    regular_pack();
+    if(num_rows % 2 == 1)   // If odd pack
+    {
+       translate([hex_w/2, 1.5*(hex_pt-extra)*num_rows + spacing,0])
+       mirror_pack();
+    }
+    else
+    {
+        translate([0,1.5*(hex_pt-extra)*num_rows + spacing,0])
+        mirror_pack();
+    }
+}
 else
     regular_pack();
+
 
 
 echo(total_height=1.5*(hex_pt-extra)*(num_rows-1)+hex_pt*2);
