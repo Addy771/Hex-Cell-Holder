@@ -21,7 +21,7 @@ opening_dia = 12;   // Circular opening to expose cell
 cell_dia = 18.6;    // Cell diameter
 wall = 0.8;           // Wall thickness around a single cell. Spacing between cells is twice this amount.
 
-holder_height = 12; // Total height of cell holder
+holder_height = 30; // Total height of cell holder
 separation = 1;   	// Separation between cell top and tab slots
 slot_height = 3.5;  // Height of all slots (3.5 mm is a good size for 14 awg solid in slots)
 col_slot_width = 4; // Width of slots between rows
@@ -35,7 +35,7 @@ part = "cap";   // "holder" to generate cell holders, "cap" to generate pack end
 cap_wall = 1.2;
 cap_clearance = 0.8;
 
-box_wall = 6;
+box_wall = 5;
 box_clearance = 0.8;
 
 num_rows = 3;       
@@ -71,11 +71,13 @@ if (part_type == "mirrored")
 else if(part_type == "both")
 {
     if (part == "cap")
+	{
         regular_cap();
+	}
     else if (part == "holder")
         regular_pack();
     
-    if(num_rows % 2 == 1)   // If odd pack
+    if(num_rows % 2 == 1)   // If odd pack move pack over to nest properly
     {
 
         mirror([1,0,0])
@@ -104,7 +106,9 @@ else if(part_type == "both")
 else	// if Normal
 {
     if (part == "cap")  
+	{
         regular_cap();
+	}
     
     else if (part == "holder")
         regular_pack();
@@ -135,11 +139,11 @@ else if(pack_style == "para")
 
 module para_cap()
 {
-    //translate([0,0,-holder_height])
+    translate([-cap_clearance/2,-cap_clearance/2,-holder_height/2])
         difference()
         {
             
-            translate([0,0,-(cap_wall)])
+            translate([-cap_clearance/2,-cap_clearance/2,-(cap_wall)])
                 minkowski()
                 {
 
@@ -176,7 +180,7 @@ module para_cap()
 
 module rect_cap()
 {
-    translate([0,0,-holder_height])
+    translate([-cap_clearance/2,-cap_clearance/2,-holder_height])
         difference()
         {
             translate([-(cap_wall),-(cap_wall),-(cap_wall)])
