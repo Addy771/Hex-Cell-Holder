@@ -245,8 +245,7 @@ module regular_box_lid()
 	
 	if (pack_style == "rect")
 	{
-		translate([-box_clearance,-box_clearance,-holder_height + box_lid_height/2])
-		{
+		
 			union()
 			{
 				
@@ -254,65 +253,73 @@ module regular_box_lid()
 				{
 					union()
 					{
-					translate([-(box_wall),-(box_wall),-(box_wall)])
-						// Positive minkowski
-						minkowski()
+					translate([-(box_wall + box_clearance),-(box_wall + box_clearance),-(box_wall + box_clearance)])
+						// Positive Hull
+						hull()
 						{
-							translate([0,0,0])
-								cube([(num_cols-0.5)*hex_w+2*(box_wall+box_clearance),1.5*(hex_pt-extra)*(num_rows-1)+2*(box_wall+box_clearance),extra],center=false);
-							
-							linear_extrude(height=box_lid_height, center=true, convexity=10)
-								polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
-						} 		
+							for (x = [0,1], y = [0,1])
+							{
+								translate([x * (get_hex_length(num_cols + 0.5) + 2*(box_wall + box_clearance)),y *( get_hex_length_pt(num_rows) + 2*(box_wall + box_clearance)),0])
+								linear_extrude(height=box_lid_height, convexity = 10)
+									polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
+								
+							}
+						}
+						
 					// Wire support hole
-					translate([(num_cols)*hex_w + box_clearance + box_wall * 1.5 - wire_hole_length*8/2,box_wall,-box_wall + extra/2])
-								cube([wire_hole_length*10,wire_hole_width + wire_wall *2,wire_hole_height+extra], center = true);
-						
+//					translate([(num_cols)*hex_w + box_clearance + box_wall * 1.5 - wire_hole_length*8/2,box_wall,-box_wall + extra/2])
+//								cube([wire_hole_length*10,wire_hole_width + wire_wall *2,wire_hole_height+extra], center = true);
+//						
 					}
-					// Negative minkowski
-					minkowski()
+					// Negative Hull
+					translate([-box_clearance,-box_clearance,0])
 					{
-						translate([0,0,0])
-							cube([(num_cols-0.5)*hex_w+2*box_clearance,1.5*(hex_pt-extra)*(num_rows-1)+2*box_clearance,extra],center=false);
-						
-						linear_extrude(height=box_lid_height, center=true, convexity=10)
-							polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
+						hull()
+						{
+							for (x = [0,1], y = [0,1])
+							{
+								translate([x * ((get_hex_length(num_cols + 0.5)+ 2 * box_clearance)),y * (get_hex_length_pt(num_rows)+ 2 * box_clearance),0])
+								linear_extrude(height=box_lid_height, convexity = 10)
+									polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
+								
+							}
+						}
 					}
 					
 					// Wire hole cutout
-					translate([(num_cols)*hex_w+box_clearance+box_wall *1.5,box_wall,extra])
-					cube([wire_hole_length *11 + box_wall *3,wire_hole_width,wire_hole_height+extra], center = true);
+//					translate([(num_cols)*hex_w+box_clearance+box_wall *1.5,box_wall,extra])
+//					cube([wire_hole_length *11 + box_wall *3,wire_hole_width,wire_hole_height+extra], center = true);
 				}
 				// Ziptie supports
-					for(col=[1:num_cols])
-					{
-						// iterate on one side
-						// add support in the shape of a hex inbetween cols
-						difference()
-						{
-						translate([-hex_w/2 + col * hex_w + box_clearance,-hex_pt*1.5 - box_clearance/2,-box_wall - box_lid_height/2])
-							linear_extrude(height=box_lid_height + extra, center=false, convexity=10)
-								polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
-						
-						translate([-hex_w/2 + col * hex_w + box_clearance,-hex_pt*2 - box_wall + extra,-box_wall - box_lid_height/2 -extra])
-						{
-							cube([hex_pt*2 + extra,hex_pt*2,box_lid_height*5],center = true);
-							
-							
-						}
-
-					
-						}
-
-
-					}
+//					for(col=[1:num_cols])
+//					{
+//						// iterate on one side
+//						// add support in the shape of a hex inbetween cols
+//						difference()
+//						{
+//						translate([-hex_w/2 + col * hex_w + box_clearance,-hex_pt*1.5 - box_clearance/2,-box_wall - box_lid_height/2])
+//							linear_extrude(height=box_lid_height + extra, center=false, convexity=10)
+//								polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
+//						
+//						translate([-hex_w/2 + col * hex_w + box_clearance,-hex_pt*2 - box_wall + extra,-box_wall - box_lid_height/2 -extra])
+//						{
+//							cube([hex_pt*2 + extra,hex_pt*2,box_lid_height*5],center = true);
+//							
+//							
+//						}
+//
+//					
+//						}
+//
+//
+//					}
 					// Add cutout for last support piece
 					// Fix z translate and cube sizes
-					translate([-hex_w/2 + num_cols * hex_w + box_clearance - hex_pt,0,-holder_height +box_lid_height/2 -box_wall - box_lid_height/2])
-					{
-						#cube([hex_w*2, hex_pt *2, box_lid_height+extra*3]);
-					}
-			}
+//					translate([-hex_w/2 + num_cols * hex_w + box_clearance - hex_pt,0,-holder_height +box_lid_height/2 -box_wall - box_lid_height/2])
+//					{
+//						cube([hex_w*2, hex_pt *2, box_lid_height+extra*3]);
+//					}
+			
 				
 		}
 		%regular_pack();	// for debugging for now
@@ -327,44 +334,45 @@ module regular_box_lid()
 
 module regular_pack()
 {
-    union()
-    {
-        for(row = [0:num_rows-1])
-        {
-            
-            if (pack_style == "rect")
-            {
-                if ((row % 2) == 0)
-                {            
-                    translate([0,1.5*(hex_pt-extra)*row,0])
-                    for(col = [0:num_cols-1])
-                    {
-                        translate([hex_w*col,0,0])
-                            pick_hex();
-                    }                
-                }
-                else
-                {
-                    translate([0.5 * hex_w,1.5*(hex_pt-extra)*row,0])
-                    for(col = [0:num_cols-1])
-                    {
-                        translate([hex_w*col,0,0])
-                            pick_hex();
-                    }
-                }
-            }
-            else if (pack_style == "para")
-            {
-                translate([row*(0.5 * hex_w),1.5*(hex_pt-extra)*row,0])
-                for(col = [0:num_cols-1])
-                {
-                    translate([hex_w*col,0,0])
-                        pick_hex();
-                }
+	translate([0,0,holder_height])
+		union()
+		{
+			for(row = [0:num_rows-1])
+			{
+				
+				if (pack_style == "rect")
+				{
+					if ((row % 2) == 0)
+					{            
+						translate([0,1.5*(hex_pt-extra)*row,0])
+						for(col = [0:num_cols-1])
+						{
+							translate([hex_w*col,0,0])
+								pick_hex();
+						}                
+					}
+					else
+					{
+						translate([0.5 * hex_w,1.5*(hex_pt-extra)*row,0])
+						for(col = [0:num_cols-1])
+						{
+							translate([hex_w*col,0,0])
+								pick_hex();
+						}
+					}
+				}
+				else if (pack_style == "para")
+				{
+					translate([row*(0.5 * hex_w),1.5*(hex_pt-extra)*row,0])
+					for(col = [0:num_cols-1])
+					{
+						translate([hex_w*col,0,0])
+							pick_hex();
+					}
 
-            }
-        }
-    }      
+				}
+			}
+		}      
 }
 
 
@@ -466,3 +474,10 @@ module bus_hex()
 	}	
 }
 
+// returns the length of the center of one hex cell on a row to number to hexes passed to function
+function get_hex_length(num_cell)
+= (num_cell-1) * hex_w;
+
+// returns the length of the center of vertical(columns) hex cells to number to hexes passed to function
+function get_hex_length_pt(num_cell)
+= (num_cell-1) * hex_pt*1.5;
