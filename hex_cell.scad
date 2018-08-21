@@ -24,26 +24,26 @@ wall = 0.8;           // Wall thickness around a single cell. Spacing between ce
 
 holder_height = 15; // Total height of cell holder
 separation = 1;   	// Separation between cell top and tab slots
-slot_height = 3.5;  // Height of all slots (3.5 mm is a good size for 14 awg solid in slots)
+slot_height = 3.5;  // Height of all slots (3.5 mm is a good size for 14 awg solid in slots) more space may be needed for putting in a box
 col_slot_width = 6; // Width of slots between rows
 row_slot_width = 6; // Width of slots along rows
 
 pack_style = "rect";    // "rect" for rectangular pack, "para" for parallelogram
 wire_style = "bus";    // "strip" to make space to run nickel strips between cells. "bus" to make space for bus wires between rows
-part_type = "normal";    // "normal","mirrored", or "both"  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram)
+part_type = "assembled";    // "normal","mirrored", or "both"  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram)
 part = "box lid";   // "holder" to generate cell holders, "cap" to generate pack end caps, "box lid" to generate boxes for the holders to fit in
 
 cap_wall = 1.2;
 cap_clearance = 0.8;
 
 box_wall = 2.0;
-box_lid_height = 20;
+box_lid_height = 15;
 box_clearance = 0.4;
 wire_hole_width = 15;
-wire_hole_height = 10;
+wire_hole_height = 10;	// Keep smaller than box_lid_height
 wire_hole_length = 5;
 wire_wall = 3;
-wire_clearance = 20; 	// Space for wires above and below holders
+wire_clearance = 0; 	// Remove? Space for wires between holder and box (vertically)
 
 num_rows = 3;       
 num_cols = 4;
@@ -111,6 +111,15 @@ else if(part_type == "both")
                     regular_pack();
     }
 }
+else if(part_type == "assembled")
+{
+	// add box non lid()
+		mock_pack();	// for debugging for now
+		color(alpha = 0.7) 
+			regular_box_lid();
+		//regular_box_bottom();
+
+}
 else	// if Normal
 {
     if (part == "cap")  
@@ -122,12 +131,7 @@ else	// if Normal
         regular_pack();
 	else if (part == "box lid")
 	{
-		
-	// add box non lid()
-		mock_pack();	// for debugging for now
-		color(alpha = 0.7)
-			render(1)
-				regular_box_lid();
+		regular_box_lid();
 	}
 		
 
@@ -233,10 +237,9 @@ module regular_cap()
 
 module regular_box_lid()
 {
-	/* To do: decide on hole design for the wires
+	/* To do: 
 	just one hole in corner
 	[]add support for wire hole
-	[]add ghost image of the entire pack for debugging
 	[]add zip ties to secure the two halves 
 		support for zipties inbetween hex in shape of hex
 		cutout ziptie area for flushness of ziptie
@@ -275,9 +278,9 @@ module regular_box_lid()
 						}
 						
 					// Wire support hole
-//					translate([(num_cols)*hex_w + box_clearance + box_wall * 1.5 - wire_hole_length*8/2,box_wall,-box_wall + extra/2])
-//								cube([wire_hole_length*10,wire_hole_width + wire_wall *2,wire_hole_height+extra], center = true);
-//						
+					translate([(num_cols)*hex_w + box_clearance + box_wall * 1.5 - wire_hole_length*8/2,0,box_lid_height-box_wall-box_clearance - (box_lid_height)/2 ])
+								cube([wire_hole_length*10,wire_hole_width + wire_wall *2,box_lid_height], center = true);
+						
 					}
 					// Negative Hull
 					translate([-box_clearance,-box_clearance,0])
@@ -295,8 +298,8 @@ module regular_box_lid()
 					}
 					
 					// Wire hole cutout
-//					translate([(num_cols)*hex_w+box_clearance+box_wall *1.5,box_wall,extra])
-//					cube([wire_hole_length *11 + box_wall *3,wire_hole_width,wire_hole_height+extra], center = true);
+					translate([(num_cols)*hex_w+box_clearance+box_wall *1.5,0,box_lid_height-box_wall-box_clearance - wire_hole_height/2 + extra])
+						cube([wire_hole_length *11 + box_wall *3,wire_hole_width,wire_hole_height], center = true);
 				}
 				// Ziptie supports
 //					for(col=[1:num_cols])
