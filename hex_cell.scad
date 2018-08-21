@@ -19,6 +19,7 @@
 
 opening_dia = 12;   // Circular opening to expose cell 
 cell_dia = 18.6;    // Cell diameter
+cell_height = 65;	// Cell height - only used when showing a mock pack
 wall = 0.8;           // Wall thickness around a single cell. Spacing between cells is twice this amount.
 
 holder_height = 15; // Total height of cell holder
@@ -54,12 +55,12 @@ num_cols = 4;
 // END OF CONFIGURATION
 
 $fn = 50;       // Number of facets for circular parts.  
-extra = 0.1;    // enlarge hexes by this to make them overlap
+extra = 0.0001;    // enlarge hexes by this to make them overlap
 spacing = 4;    // Spacing between top and bottom pieces
 height_18650 = 65;
 
 hex_w = cell_dia + 2*wall;	// Width of one hex cell
-hex_pt = (hex_w/2 + extra) / cos(30); // Half the distance of point to point of a hex aka radius
+hex_pt = (hex_w/2) / cos(30); // Half the distance of point to point of a hex aka radius
 
 
 if (part_type == "mirrored")
@@ -90,10 +91,10 @@ else if(part_type == "both")
         mirror([1,0,0])
 		{
             if (part == "cap")
-                translate([-hex_w*(num_cols - 0.5), 1.5*(hex_pt-extra)*(num_rows+1) + spacing,0])
+                translate([-hex_w*(num_cols - 0.5), 1.5*(hex_pt)*(num_rows+1) + spacing,0])
                     regular_cap();
             else if (part == "holder")
-                translate([-hex_w*(num_cols - 0.5), 1.5*(hex_pt-extra)*num_rows + spacing,0])
+                translate([-hex_w*(num_cols - 0.5), 1.5*(hex_pt)*num_rows + spacing,0])
                     regular_pack();
 		}
     }
@@ -102,11 +103,11 @@ else if(part_type == "both")
         
         mirror([1,0,0])
             if (part == "cap")
-                translate([-hex_w*(num_cols - 0.5),1.5*(hex_pt-extra)*(num_rows+1) + spacing,0])
+                translate([-hex_w*(num_cols - 0.5),1.5*(hex_pt)*(num_rows+1) + spacing,0])
                     regular_cap();
 			
             else if (part == "holder")
-                translate([-hex_w*(num_cols - 1),1.5*(hex_pt-extra)*num_rows + spacing,0])
+                translate([-hex_w*(num_cols - 1),1.5*(hex_pt)*num_rows + spacing,0])
                     regular_pack();
     }
 }
@@ -120,14 +121,18 @@ else	// if Normal
     else if (part == "holder")
         regular_pack();
 	else if (part == "box lid")
+	{
 		regular_box_lid();
-	// add box*-
+	// add box non lid()
+		mock_pack();	// for debugging for now
+	}
+		
 
 }
 
 
 // echos and info
-echo(total_width=1.5*(hex_pt-extra)*(num_rows-1)+hex_pt*2);
+echo(total_width=1.5*(hex_pt)*(num_rows-1)+hex_pt*2);
 
 if (pack_style == "rect")
 {
@@ -158,8 +163,8 @@ module para_cap()
                     linear_extrude(height=extra + cap_wall, center=false, convexity=10)
                         polygon([
                             [0,0],
-                            [hex_w*(num_rows-1)*0.5,1.5*(hex_pt-extra)*(num_rows-1)],
-                            [hex_w*(num_rows-1)*0.5+hex_w*(num_cols-1),1.5*(hex_pt-extra)*(num_rows-1)],
+                            [hex_w*(num_rows-1)*0.5,1.5*(hex_pt)*(num_rows-1)],
+                            [hex_w*(num_rows-1)*0.5+hex_w*(num_cols-1),1.5*(hex_pt)*(num_rows-1)],
                             [hex_w*(num_cols-1),0]]
                         );
                     
@@ -173,8 +178,8 @@ module para_cap()
                 linear_extrude(height=extra*2, center=false, convexity=10)
                     polygon([
                         [0,0],
-                        [hex_w*(num_rows-1)*0.5,1.5*(hex_pt-extra)*(num_rows-1)],
-                        [hex_w*(num_rows-1)*0.5+hex_w*(num_cols-1),1.5*(hex_pt-extra)*(num_rows-1)],
+                        [hex_w*(num_rows-1)*0.5,1.5*(hex_pt)*(num_rows-1)],
+                        [hex_w*(num_rows-1)*0.5+hex_w*(num_cols-1),1.5*(hex_pt)*(num_rows-1)],
                         [hex_w*(num_cols-1),0]]
                     );
                 hex_pt2 = (hex_w/2 + extra + cap_clearance) / cos(30);
@@ -227,15 +232,15 @@ module regular_box_lid()
 {
 	/* To do: decide on hole design for the wires
 	just one hole in corner
-	add support for wire hole
-	add ghost image of the entire pack for debugging
-	add zip ties to secure the two halves 
+	[]add support for wire hole
+	[]add ghost image of the entire pack for debugging
+	[]add zip ties to secure the two halves 
 		support for zipties inbetween hex in shape of hex
 		cutout ziptie area for flushness of ziptie
 	
-	add clearance for wires top and bottom
-	add helper functions to get pack sizes 
-	optimize using hull()
+	[]add clearance for wires top and bottom
+	[x]add helper functions to get pack sizes 
+	[x]optimize using hull()
 	
 	
 	*/
@@ -279,7 +284,7 @@ module regular_box_lid()
 							for (x = [0,1], y = [0,1])
 							{
 								translate([x * ((get_hex_length(num_cols + 0.5)+ 2 * box_clearance)),y * (get_hex_length_pt(num_rows)+ 2 * box_clearance),0])
-								linear_extrude(height=box_lid_height, convexity = 10)
+								linear_extrude(height=box_lid_height + extra, convexity = 10)
 									polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
 								
 							}
@@ -322,7 +327,7 @@ module regular_box_lid()
 			
 				
 		}
-		%regular_pack();	// for debugging for now
+		
 	}
 	
     else if (pack_style == "para")
@@ -331,6 +336,28 @@ module regular_box_lid()
 	
 }
 
+// Creates a mock pack for debugging
+// Origin is the bottom of the center of the first hex cell
+module mock_pack()
+{
+	color("green") regular_pack();
+	// add 18650s
+	for(x = get_hex_center_points_rect(num_rows,num_cols))
+		 {
+			// Iterate through each hex center and place a cell
+			// find out proper z height for translate  holder_height-slot_height-separation?
+			translate([x[0],x[1],holder_height-slot_height-separation])
+				color("CornflowerBlue")mock_cell();
+
+		 }
+
+}
+
+// Creates a mock cell. Origin is bottom of cylinder.
+module mock_cell()
+{
+	cylinder(d = cell_dia, h = cell_height);
+}
 
 module regular_pack()
 {
@@ -344,7 +371,7 @@ module regular_pack()
 				{
 					if ((row % 2) == 0)
 					{            
-						translate([0,1.5*(hex_pt-extra)*row,0])
+						translate([0,1.5*(hex_pt)*row,0])
 						for(col = [0:num_cols-1])
 						{
 							translate([hex_w*col,0,0])
@@ -353,7 +380,7 @@ module regular_pack()
 					}
 					else
 					{
-						translate([0.5 * hex_w,1.5*(hex_pt-extra)*row,0])
+						translate([0.5 * hex_w,1.5*(hex_pt)*row,0])
 						for(col = [0:num_cols-1])
 						{
 							translate([hex_w*col,0,0])
@@ -363,7 +390,7 @@ module regular_pack()
 				}
 				else if (pack_style == "para")
 				{
-					translate([row*(0.5 * hex_w),1.5*(hex_pt-extra)*row,0])
+					translate([row*(0.5 * hex_w),1.5*(hex_pt)*row,0])
 					for(col = [0:num_cols-1])
 					{
 						translate([hex_w*col,0,0])
@@ -397,7 +424,7 @@ module strip_hex()
 		{
 			// Hex block
 			linear_extrude(height=holder_height, center=false, convexity=10)
-				polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
+				polygon([ for (a=[0:5])[(hex_pt + extra)*sin(a*60),(hex_pt + extra)*cos(a*60)]]); 
 					
 			// Top opening    
 			translate([0,0,-1])
@@ -434,7 +461,7 @@ module bus_hex()
 		{
 			// Hex block
 			linear_extrude(height=holder_height, center=false, convexity=10)
-				polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
+				polygon([ for (a=[0:5])[(hex_pt + extra)*sin(a*60),(hex_pt + extra)*cos(a*60)]]); 
 					
 			// Top opening    
 			translate([0,0,-1])
@@ -481,3 +508,20 @@ function get_hex_length(num_cell)
 // returns the length of the center of vertical(columns) hex cells to number to hexes passed to function
 function get_hex_length_pt(num_cell)
 = (num_cell-1) * hex_pt*1.5;
+
+// returns a list of the hex cell centers.
+function get_hex_center_points_rect(num_rows, num_cols)
+//= [[(num_rows == 1) ? 1 : 2,2],[2,4]]; // vector of points test 
+=  [
+	// Iterate through num of rows and cols
+	for(row = [0:num_rows-1],col = [0:num_cols-1]) 
+	[	// X component of list member
+		row % 2 == 0 ? // if even
+		hex_w * col :
+		//else	
+		0.5 * hex_w + hex_w * col
+		,	
+		// Y component of list member
+		 row * 1.5 * (hex_pt)
+		 ]
+	];	// Closing function bracket
