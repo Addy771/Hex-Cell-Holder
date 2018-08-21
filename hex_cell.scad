@@ -302,34 +302,37 @@ module regular_box_lid()
 						cube([wire_hole_length *11 + box_wall *3,wire_hole_width,wire_hole_height], center = true);
 				}
 				// Ziptie supports
-//					for(col=[1:num_cols])
-//					{
-//						// iterate on one side
-//						// add support in the shape of a hex inbetween cols
-//						difference()
-//						{
-//						translate([-hex_w/2 + col * hex_w + box_clearance,-hex_pt*1.5 - box_clearance/2,-box_wall - box_lid_height/2])
-//							linear_extrude(height=box_lid_height + extra, center=false, convexity=10)
-//								polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
-//						
-//						translate([-hex_w/2 + col * hex_w + box_clearance,-hex_pt*2 - box_wall + extra,-box_wall - box_lid_height/2 -extra])
-//						{
-//							cube([hex_pt*2 + extra,hex_pt*2,box_lid_height*5],center = true);
-//							
-//							
-//						}
-//
-//					
-//						}
-//
-//
-//					}
-					// Add cutout for last support piece
-					// Fix z translate and cube sizes
-//					translate([-hex_w/2 + num_cols * hex_w + box_clearance - hex_pt,0,-holder_height +box_lid_height/2 -box_wall - box_lid_height/2])
-//					{
-//						cube([hex_w*2, hex_pt *2, box_lid_height+extra*3]);
-//					}
+				difference()
+				{
+					for(col = [1:num_cols])
+					{
+						// iterate on one side
+						// add support in the shape of a hex inbetween cols
+						difference()
+						{
+						translate([-hex_w/2 + col * hex_w,-hex_pt*1.5 - box_clearance/2,-(box_wall + box_clearance)])
+							linear_extrude(height=box_lid_height + extra, center=false, convexity=10)
+								polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
+						
+						translate([-hex_w/2 + col * hex_w + box_clearance,-hex_pt*2 - box_wall + extra,-box_wall - box_lid_height/2 -extra])
+						{
+							cube([hex_pt*2 + extra,hex_pt*2,box_lid_height*5],center = true);
+						}
+
+					
+						}
+
+
+					}
+					// Cutout for last support piece
+					//Fix z translate and cube sizes
+					translate([get_hex_length(num_cols+0.5),-hex_pt*2,-(box_wall + box_clearance) - extra])
+					{
+						cube([hex_w, hex_pt*2, box_lid_height *2]);
+					}
+				}
+					
+					
 			
 				
 		}
