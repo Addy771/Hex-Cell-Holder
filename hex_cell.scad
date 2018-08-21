@@ -25,11 +25,11 @@ wall = 0.8;           // Wall thickness around a single cell. Spacing between ce
 holder_height = 15; // Total height of cell holder
 separation = 1;   	// Separation between cell top and tab slots
 slot_height = 3.5;  // Height of all slots (3.5 mm is a good size for 14 awg solid in slots)
-col_slot_width = 4; // Width of slots between rows
-row_slot_width = 8; // Width of slots along rows
+col_slot_width = 6; // Width of slots between rows
+row_slot_width = 6; // Width of slots along rows
 
 pack_style = "rect";    // "rect" for rectangular pack, "para" for parallelogram
-wire_style = "strip";    // "strip" to make space to run nickel strips between cells. "bus" to make space for bus wires between rows
+wire_style = "bus";    // "strip" to make space to run nickel strips between cells. "bus" to make space for bus wires between rows
 part_type = "normal";    // "normal","mirrored", or "both"  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram)
 part = "box lid";   // "holder" to generate cell holders, "cap" to generate pack end caps, "box lid" to generate boxes for the holders to fit in
 
@@ -122,9 +122,12 @@ else	// if Normal
         regular_pack();
 	else if (part == "box lid")
 	{
-		regular_box_lid();
+		
 	// add box non lid()
 		mock_pack();	// for debugging for now
+		color(alpha = 0.7)
+			render(1)
+				regular_box_lid();
 	}
 		
 
@@ -340,7 +343,8 @@ module regular_box_lid()
 // Origin is the bottom of the center of the first hex cell
 module mock_pack()
 {
-	color("green") regular_pack();
+	
+	color("blue") render(1)regular_pack();
 	// add 18650s
 	for(x = get_hex_center_points_rect(num_rows,num_cols))
 		 {
@@ -350,7 +354,10 @@ module mock_pack()
 				color("CornflowerBlue")mock_cell();
 
 		 }
-
+	color("blue")
+		translate([0,0,holder_height-slot_height-separation+cell_height+slot_height+separation])
+			mirror([0,0,1])
+				render(1)regular_pack();
 }
 
 // Creates a mock cell. Origin is bottom of cylinder.
