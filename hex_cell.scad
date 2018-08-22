@@ -132,14 +132,14 @@ else if(part_type == "assembled")
 {
 	
 	mock_pack();	// for debugging for now
-	color(alpha = 0.7)
-	{
-		regular_box_lid();
-		translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance)])
-			mirror([0,0,1])
-				regular_box_bottom();
-		
-	}
+	translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance)])
+		mirror([0,0,1])
+			color("green", alpha = 0.7)
+			regular_box_lid();
+	
+		color("lightgreen", alpha = 0.7)
+		regular_box_bottom();
+
 }
 else	// if Normal
 {
@@ -278,13 +278,19 @@ module regular_box_bottom()
 		{
 			union()
 			{
-				// Positive
-				rect_cap_positive(box_wall,box_clearance,box_bottom_height);
-
+				rect_cap(box_wall,box_clearance,box_bottom_height);
+				both_lid_supports(box_bottom_height);
 			}
-			
-			// Negative
-			rect_cap_negative(box_wall,box_clearance);
+
+			// Other cutouts of entire box bottom
+			if (box_style == "ziptie")
+			{
+				both_ziptie_holes();
+			}
+			else if (box_style == "bolt")
+			{
+				both_bolt_hole_taps();
+			}
 		}
 	}
 	else if (pack_style == "para")
@@ -329,7 +335,7 @@ module regular_box_lid()
 							cube([wire_hole_length*10,wire_hole_width + wire_wall *2,box_lid_height], center = true);
 						
 					}
-					// Negative
+					// Negatives
 					translate([-box_clearance,-box_clearance,0])
 					{
 						rect_cap_negative(box_wall,box_clearance,box_lid_height);
@@ -360,6 +366,14 @@ module regular_box_lid()
 	;
 	
 }
+module both_bolt_hole_taps()
+{
+	bolt_hole_taps();
+	// On other side
+	translate([0,get_hex_length_pt(num_rows),0])
+		mirror([0,1,0])
+				bolt_hole_taps();
+}
 
 module both_bolt_holes()
 {
@@ -370,13 +384,13 @@ module both_bolt_holes()
 				bolt_holes();
 }
 
-module both_lid_supports()
+module both_lid_supports(lid_support_height = box_lid_height)
 {
-	lid_support();
+	lid_support(lid_support_height);
 	// On other side
 	translate([0,get_hex_length_pt(num_rows),0])
 		mirror([0,1,0])
-				lid_support();
+				lid_support(lid_support_height);
 
 }
 
@@ -557,7 +571,7 @@ module bus_hex()
 	}	
 }
 
-module lid_support()
+module lid_support(lid_support_height = box_lid_height)
 {
 	// Ziptie supports
 	difference()
@@ -569,21 +583,21 @@ module lid_support()
 			difference()
 			{
 				translate([-hex_w/2 + col * hex_w,-hex_pt*1.5 - box_clearance/2,-(box_wall + box_clearance)])
-					linear_extrude(height=box_lid_height, center=false, convexity=10)
+					linear_extrude(height=lid_support_height, center=false, convexity=10)
 						polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
 				
-				translate([-hex_w/2 + col * hex_w + box_clearance,-hex_pt*2 - box_wall + extra,-box_wall - box_lid_height/2 -extra])
+				translate([-hex_w/2 + col * hex_w + box_clearance,-hex_pt*2 - box_wall + extra,-box_wall - lid_support_height/2 -extra])
 				{
-					cube([hex_pt*2 + extra,hex_pt*2,box_lid_height*5],center = true);
+					cube([hex_pt*2 + extra,hex_pt*2,lid_support_height*5],center = true);
 				}
 			}
 
 
 		}
 		// Cutout for last support piece
-		translate([get_hex_length(num_cols+1) + box_clearance + box_wall,-hex_pt*1.5 - 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance) - box_lid_height])
+		translate([get_hex_length(num_cols+1) + box_clearance + box_wall,-hex_pt*1.5 - 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
 		{
-			linear_extrude(height=box_lid_height*3, center=false, convexity=10)
+			linear_extrude(height=lid_support_height*3, center=false, convexity=10)
 					polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
 		}
 		
@@ -598,18 +612,26 @@ module ziptie_holes()
 	for(col = [1:num_cols])
 	{
 			// Cutout ziptie holes
-			translate([-hex_w/2 + col * hex_w,-hex_pt + 0.5 *(box_wall + box_clearance),box_lid_height/2-box_wall-box_clearance])
+			translate([-hex_w/2 + col * hex_w,-hex_pt + 0.5 *(box_wall + box_clearance),box_bottom_height/2-box_wall-box_clearance])
 			{
-				cube([ziptie_width,ziptie_thickness,box_lid_height*2],center = true);
+				cube([ziptie_width,ziptie_thickness,box_bottom_height*2],center = true);
 			// Cutout for ziptie head (cuts through lid however, should think of a better solution maybe bolts instead?)
 			// translate([0,ziptie_head_thickness/2-ziptie_thickness/2,-(box_lid_height/2-box_wall-box_clearance)- (box_wall + box_clearance) + ziptie_head_length/2 - extra/2])
 			// 	cube([ziptie_head_width,ziptie_head_thickness,ziptie_head_length + extra],center = true);
 			}	
 	}
 }
-module bolt_holes_tap()
+module bolt_hole_taps()
 {
-
+	for(col = [1:num_cols])
+	{
+			// Cutout bolt holes
+			// bolt holes go into the box bottom 40% of the total height. Should be enough for any length bolt
+			translate([-hex_w/2 + col * hex_w,-hex_pt + 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance ) + box_bottom_height * 0.60])
+			{
+				#cylinder(d = bolt_dia - bolt_dia_clearance, h = box_bottom_height * 0.40 + extra);
+			}	
+	}
 }
 
 // Creates a positive model of the bolt holes and the bolt heads
@@ -620,7 +642,7 @@ module bolt_holes()
 			// Cutout bolt holes
 			translate([-hex_w/2 + col * hex_w,-hex_pt + 0.5 *(box_wall + box_clearance),box_lid_height/2-box_wall-box_clearance])
 			{
-				cylinder(d = bolt_dia + bolt_dia_clearance, h = box_lid_height*2,center = true);
+				cylinder(d = bolt_dia + bolt_dia_clearance, h = box_bottom_height*2,center = true);
 			translate([0,0,-(box_lid_height/2-box_wall-box_clearance)- (box_wall + box_clearance) - extra])
 				cylinder(d = bolt_head_dia + bolt_dia_clearance, h = bolt_head_thickness + extra);
 			}	
