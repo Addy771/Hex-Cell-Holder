@@ -13,7 +13,8 @@
 // TODO: 
 // - add flat border option
 // - add boxes
-
+// - fix caps
+// 
 
 // CONFIGURATION
 ////////////////////////////////////////////////////////////////////////////////////
@@ -33,13 +34,14 @@ pack_style = "rect";    // "rect" for rectangular pack, "para" for parallelogram
 wire_style = "bus";    // "strip" to make space to run nickel strips between cells. "bus" to make space for bus wires between rows
 box_style = "bolt";		// "bolt" for bolting the box pack together, "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out)
 part_type = "assembled";    // "normal","mirrored", or "both". "assembled" is used for debugging  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram)
-part = "box lid";   // "holder" to generate cell holders, "cap" to generate pack end caps, "box lid" to generate boxes for the holders to fit in
+part = "cap";   // "holder" to generate cell holders, "cap" to generate pack end caps, "box lid" to generate boxes for the holders to fit in
 
 cap_wall = 1.2;
 cap_clearance = 0.8;
 
 box_wall = 2.0;
 box_lid_height = 15;
+
 box_clearance = 0.4;
 wire_hole_width = 15;
 wire_hole_height = 10;	// Keep smaller than box_lid_height
@@ -71,6 +73,7 @@ $fn = 50;       // Number of facets for circular parts.
 hextra = 0.0001; // enlarge hexes by this to make them overlap
 extra = 1;    	// for proper differences
 spacing = 4;    // Spacing between top and bottom pieces
+box_bottom_height = get_mock_pack_height() - box_lid_height;
 height_18650 = 65;
 
 hex_w = cell_dia + 2*wall;	// Width of one hex cell
@@ -127,12 +130,16 @@ else if(part_type == "both")
 }
 else if(part_type == "assembled")
 {
-	// add box non lid()
-		mock_pack();	// for debugging for now
-		color(alpha = 0.7) 
-			regular_box_lid();
-		//regular_box_bottom();
-
+	
+	mock_pack();	// for debugging for now
+	color(alpha = 0.7)
+	{
+		regular_box_lid();
+		translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance)])
+			mirror([0,0,1])
+				regular_box_bottom();
+		
+	}
 }
 else	// if Normal
 {
@@ -212,35 +219,50 @@ module para_cap()
 }
 
 
-module rect_cap()
+module rect_cap(cap_wall, cap_clearance,cap_height = holder_height)
 {
-    translate([-cap_clearance,-cap_clearance,-holder_height])
-        difference()
-        {
-            translate([-(cap_wall),-(cap_wall),-(cap_wall)])
-                minkowski()
-                {
-                    translate([0,0,holder_height/2])
-                        cube([(num_cols-0.5)*hex_w+2*(cap_wall+cap_clearance),
-					1.5*(hex_pt-extra)*(num_rows-1)+2*(cap_wall+cap_clearance),
-					extra+cap_wall],center=false);
-                    
-                   linear_extrude(height=holder_height, center=true, convexity=10)
-                        polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
-                }        
-            
-            minkowski()
-            {
-                translate([0,0,holder_height/2])
-                    cube([(num_cols-0.5)*hex_w+2*cap_clearance,1.5*(hex_pt-extra)*(num_rows-1)+2*cap_clearance,extra],center=false);
-                
-                linear_extrude(height=holder_height + extra, center=true, convexity=10)
-                    polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
-            }
-        }
+	difference()
+	{
+		// Positive Hull	
+		rect_cap_positive(cap_wall,cap_clearance,cap_height);
+		// Negative Hull
+		rect_cap_negative(cap_wall,cap_clearance,cap_height);
+		
+	}
 } 
 
+// Generates the rectangular cap positive piece used in rect_cap and box. Default height is holder height
+module rect_cap_positive(cap_wall,cap_clearance,cap_height = holder_height)
+{
+	translate([-(cap_wall + cap_clearance),-(cap_wall + cap_clearance),-(cap_wall + cap_clearance)])
+			
+		hull()
+		{
+			for (x = [0,1], y = [0,1])
+			{
+				translate([x * (get_hex_length(num_cols + 0.5) + 2*(cap_wall + cap_clearance)),y *( get_hex_length_pt(num_rows) + 2*(cap_wall + cap_clearance)),0])
+				linear_extrude(height=cap_height, convexity = 10)
+					polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
+				
+			}
+		}
+}
 
+// Generates the rect_cap negative piece (as a positive to be cut out using difference) used in rect_cap and box
+module rect_cap_negative(cap_wall,cap_clearance,cap_height = holder_height)
+{
+	translate([-cap_clearance,-cap_clearance,0])
+		hull()
+		{
+			for (x = [0,1], y = [0,1])
+			{
+				translate([x * ((get_hex_length(num_cols + 0.5)+ 2 * cap_clearance)),y * (get_hex_length_pt(num_rows)+ 2 * cap_clearance),0])
+				linear_extrude(height=cap_height + extra, convexity = 10)
+					polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
+				
+			}
+		}
+}
 module regular_cap()
 {
     if (pack_style == "rect")
@@ -248,7 +270,27 @@ module regular_cap()
     else if (pack_style == "para")
         para_cap();
 }
+module regular_box_bottom()
+{
+	if(pack_style == "rect")
+	{
+		difference()
+		{
+			union()
+			{
+				// Positive
+				rect_cap_positive(box_wall,box_clearance,box_bottom_height);
 
+			}
+			
+			// Negative
+			rect_cap_negative(box_wall,box_clearance);
+		}
+	}
+	else if (pack_style == "para")
+    // para box;
+	;
+}
 module regular_box_lid()
 {
 	/* To do: 
@@ -265,7 +307,8 @@ module regular_box_lid()
 	
 	
 	*/
-
+	
+	
 	if (pack_style == "rect")
 	{
 		difference()
@@ -279,37 +322,17 @@ module regular_box_lid()
 				{
 					union()
 					{
-					translate([-(box_wall + box_clearance),-(box_wall + box_clearance),-(box_wall + box_clearance)])
-						// Positive Hull
-						hull()
-						{
-							for (x = [0,1], y = [0,1])
-							{
-								translate([x * (get_hex_length(num_cols + 0.5) + 2*(box_wall + box_clearance)),y *( get_hex_length_pt(num_rows) + 2*(box_wall + box_clearance)),0])
-								linear_extrude(height=box_lid_height, convexity = 10)
-									polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
-								
-							}
-						}
-						
-					// Wire support hole
-					translate([(num_cols)*hex_w + box_clearance + box_wall * 1.5 - wire_hole_length*8/2,0,box_lid_height-box_wall-box_clearance - (box_lid_height)/2 ])
-								cube([wire_hole_length*10,wire_hole_width + wire_wall *2,box_lid_height], center = true);
+						// Positive
+						rect_cap_positive(box_wall,box_clearance,box_lid_height);
+						// Wire support hole
+						translate([(num_cols)*hex_w + box_clearance + box_wall * 1.5 - wire_hole_length*8/2,0,box_lid_height-box_wall-box_clearance - (box_lid_height)/2 ])
+							cube([wire_hole_length*10,wire_hole_width + wire_wall *2,box_lid_height], center = true);
 						
 					}
-					// Negative Hull
+					// Negative
 					translate([-box_clearance,-box_clearance,0])
 					{
-						hull()
-						{
-							for (x = [0,1], y = [0,1])
-							{
-								translate([x * ((get_hex_length(num_cols + 0.5)+ 2 * box_clearance)),y * (get_hex_length_pt(num_rows)+ 2 * box_clearance),0])
-								linear_extrude(height=box_lid_height + extra, convexity = 10)
-									polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
-								
-							}
-						}
+						rect_cap_negative(box_wall,box_clearance,box_lid_height);
 					}
 					// Wire hole cutout
 					translate([(num_cols)*hex_w+box_clearance+box_wall *1.5,0,box_lid_height-box_wall-box_clearance - wire_hole_height/2 + extra])
@@ -337,6 +360,7 @@ module regular_box_lid()
 	;
 	
 }
+
 module both_bolt_holes()
 {
 	bolt_holes();
@@ -385,7 +409,7 @@ module mock_pack()
 				render(1)regular_pack();
 }
 
-// Creates a mock cell. Origin is bottom of cylinder.
+// Creates a mock cell. Origin is bottom of 1st hex cell holder.
 module mock_cell()
 {
 	cylinder(d = cell_dia, h = cell_height);
@@ -603,7 +627,9 @@ module bolt_holes()
 	}
 }
 
-
+// returns height of the mock pack
+function get_mock_pack_height() 
+= 2*(holder_height-slot_height-separation) + cell_height;
 // returns the length of the center of one hex cell on a row to number to hexes passed to function
 function get_hex_length(num_cell)
 = (num_cell-1) * hex_w;
