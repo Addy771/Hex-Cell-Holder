@@ -12,9 +12,9 @@
 
 // TODO: 
 // - add flat border option
-// - add boxes
 // - fix caps
-// 
+// - add option for space for a bms and spacers
+// - have nicer cylindrical wire hole
 
 // CONFIGURATION
 ////////////////////////////////////////////////////////////////////////////////////
@@ -22,7 +22,10 @@
 opening_dia = 12;   // Circular opening to expose cell 
 cell_dia = 18.6;    // Cell diameter
 cell_height = 65;	// Cell height - only used when showing a mock pack
-wall = 0.8;           // Wall thickness around a single cell. Spacing between cells is twice this amount.
+wall = 0.8;         // Wall thickness around a single cell. Spacing between cells is twice this amount.
+
+num_rows = 2;       
+num_cols = 4;
 
 holder_height = 15; // Total height of cell holder
 separation = 1;   	// Separation between cell top and tab slots
@@ -32,7 +35,7 @@ row_slot_width = 6; // Width of slots along rows
 
 pack_style = "rect";    // "rect" for rectangular pack, "para" for parallelogram
 wire_style = "bus";    // "strip" to make space to run nickel strips between cells. "bus" to make space for bus wires between rows
-box_style = "bolt";		// "bolt" for bolting the box pack together, "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out)
+box_style = "both";		// "bolt" for bolting the box pack together, "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out), "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
 part_type = "assembled";    // "normal","mirrored", or "both". "assembled" is used for debugging  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram)
 part = "cap";   // "holder" to generate cell holders, "cap" to generate pack end caps, "box lid" to generate boxes for the holders to fit in
 
@@ -44,7 +47,7 @@ box_lid_height = 15;
 
 box_clearance = 0.4;
 wire_hole_width = 15;
-wire_hole_height = 10;	// Keep smaller than box_lid_height
+wire_hole_height = 8;	// Keep smaller than box_lid_height
 wire_hole_length = 5;
 wire_wall = 3;
 wire_clearance = 0; 	// Remove if not needed. Space for wires between holder and box (vertically)
@@ -60,8 +63,7 @@ ziptie_head_width = 7;
 ziptie_head_length = 7;
 ziptie_head_thickness = 5;
 
-num_rows = 3;       
-num_cols = 4;
+
 
 //////////////////////////////////////////////////////
 // Don't forget to do a test fit print
@@ -73,7 +75,7 @@ $fn = 50;       // Number of facets for circular parts.
 hextra = 0.0001; // enlarge hexes by this to make them overlap
 extra = 1;    	// for proper differences
 spacing = 4;    // Spacing between top and bottom pieces
-box_bottom_height = get_mock_pack_height() - box_lid_height;
+box_bottom_height = get_mock_pack_height() + 2 * (box_wall + box_clearance) - box_lid_height;
 height_18650 = 65;
 
 hex_w = cell_dia + 2*wall;	// Width of one hex cell
@@ -270,33 +272,7 @@ module regular_cap()
     else if (pack_style == "para")
         para_cap();
 }
-module regular_box_bottom()
-{
-	if(pack_style == "rect")
-	{
-		difference()
-		{
-			union()
-			{
-				rect_cap(box_wall,box_clearance,box_bottom_height);
-				both_lid_supports(box_bottom_height);
-			}
 
-			// Other cutouts of entire box bottom
-			if (box_style == "ziptie")
-			{
-				both_ziptie_holes();
-			}
-			else if (box_style == "bolt")
-			{
-				both_bolt_hole_taps();
-			}
-		}
-	}
-	else if (pack_style == "para")
-    // para box;
-	;
-}
 module regular_box_lid()
 {
 	/* To do: 
@@ -349,14 +325,7 @@ module regular_box_lid()
 				
 			}
 			// Other cutouts of entire box lid
-			if (box_style == "ziptie")
-			{
-				both_ziptie_holes();
-			}
-			else if (box_style == "bolt")
-			{
-				both_bolt_holes();
-			}
+			pick_hole_style(lid = true);
 		}
 		
 	}
@@ -366,42 +335,28 @@ module regular_box_lid()
 	;
 	
 }
-module both_bolt_hole_taps()
+
+module regular_box_bottom()
 {
-	bolt_hole_taps();
-	// On other side
-	translate([0,get_hex_length_pt(num_rows),0])
-		mirror([0,1,0])
-				bolt_hole_taps();
+	if(pack_style == "rect")
+	{
+		difference()
+		{
+			union()
+			{
+				rect_cap(box_wall,box_clearance,box_bottom_height);
+				both_lid_supports(box_bottom_height);
+			}
+
+			// Other cutouts of entire box bottom
+			pick_hole_style();
+		}
+	}
+	else if (pack_style == "para")
+    // para box;
+	;
 }
 
-module both_bolt_holes()
-{
-	bolt_holes();
-	// On other side
-	translate([0,get_hex_length_pt(num_rows),0])
-		mirror([0,1,0])
-				bolt_holes();
-}
-
-module both_lid_supports(lid_support_height = box_lid_height)
-{
-	lid_support(lid_support_height);
-	// On other side
-	translate([0,get_hex_length_pt(num_rows),0])
-		mirror([0,1,0])
-				lid_support(lid_support_height);
-
-}
-
-module both_ziptie_holes()
-{
-	// Ziptie supports
-	ziptie_holes();
-	translate([0,get_hex_length_pt(num_rows),0])
-		mirror([0,1,0])
-			ziptie_holes();
-}
 // Creates a mock pack for debugging
 // Origin is the bottom of the center of the first hex cell
 module mock_pack()
@@ -413,12 +368,12 @@ module mock_pack()
 		 {
 			// Iterate through each hex center and place a cell
 			// find out proper z height for translate  holder_height-slot_height-separation?
-			translate([x[0],x[1],holder_height-slot_height-separation])
+			translate([x[0],x[1],slot_height + separation])
 				color("CornflowerBlue")mock_cell();
 
 		 }
 	color("blue")
-		translate([0,0,holder_height-slot_height-separation+cell_height+slot_height+separation])
+		translate([0,0,slot_height + separation + cell_height + slot_height + separation])
 			mirror([0,0,1])
 				render(1)regular_pack();
 }
@@ -571,6 +526,21 @@ module bus_hex()
 	}	
 }
 
+module both_lid_supports(lid_support_height = box_lid_height)
+{
+	lid_support(lid_support_height);
+
+	// if even, translate over half a hex
+	if(num_rows % 2 == 0)
+		translate([get_hex_length(num_cols +0.5),get_hex_length_pt(num_rows),0])
+			rotate([0,0,180])
+				lid_support(lid_support_height);
+	else	
+		translate([0,get_hex_length_pt(num_rows),0])
+			mirror([0,1,0])
+					lid_support(lid_support_height);
+}
+
 module lid_support(lid_support_height = box_lid_height)
 {
 	// Ziptie supports
@@ -606,10 +576,55 @@ module lid_support(lid_support_height = box_lid_height)
 	}
 }
 
-// Holes for ziptie
-module ziptie_holes()
+// Picks the correct hole style based on configuration
+module pick_hole_style(lid = false)
 {
-	for(col = [1:num_cols])
+		// Other cutouts of entire box lid
+		if (box_style == "ziptie")
+		{
+			both_ziptie_holes();
+		}
+		else if (box_style == "bolt")
+		{
+			// if holes are for lid, make them bolt size, otherwise for the bottom, use the tap size and no bolt head
+			if(lid)
+				both_bolt_holes(bolt_dia + bolt_dia_clearance, bolt_head_dia + bolt_dia_clearance,[1:num_cols]);
+			else
+			{
+				both_bolt_holes(bolt_dia * 0.9, bolt_dia * 0.9,[1:num_cols]);
+
+			}
+				
+		}
+		else if (box_style == "both")
+		{
+			if(lid)
+				both_bolt_holes(bolt_dia + bolt_dia_clearance, bolt_head_dia + bolt_dia_clearance,[1,num_cols]);
+			else
+				both_bolt_holes(bolt_dia * 0.9,bolt_dia * 0.9,[1,num_cols]);
+
+			both_ziptie_holes(ziptie_width, ziptie_thickness,[2:num_cols-1]);
+		}
+}
+module both_ziptie_holes(ziptie_width = ziptie_width,ziptie_thickness = ziptie_thickness,range = [1:num_cols])
+{
+	ziptie_holes(ziptie_width,ziptie_thickness,range);
+	
+	// if even, translate over half a hex
+	if(num_rows % 2 == 0)
+		translate([get_hex_length(num_cols +0.5),get_hex_length_pt(num_rows),0])
+			rotate([0,0,180])
+				ziptie_holes(ziptie_width,ziptie_thickness,range);
+	else	
+		translate([0,get_hex_length_pt(num_rows),0])
+			mirror([0,1,0])
+					ziptie_holes(ziptie_width,ziptie_thickness,range);
+
+}
+// Holes for ziptie
+module ziptie_holes(ziptie_width = ziptie_width,ziptie_thickness = ziptie_thickness, range = [1:num_cols])
+{
+	for(col = range)
 	{
 			// Cutout ziptie holes
 			translate([-hex_w/2 + col * hex_w,-hex_pt + 0.5 *(box_wall + box_clearance),box_bottom_height/2-box_wall-box_clearance])
@@ -621,37 +636,38 @@ module ziptie_holes()
 			}	
 	}
 }
-module bolt_hole_taps()
-{
-	for(col = [1:num_cols])
-	{
-			// Cutout bolt holes
-			// bolt holes go into the box bottom 40% of the total height. Should be enough for any length bolt
-			translate([-hex_w/2 + col * hex_w,-hex_pt + 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance ) + box_bottom_height * 0.60])
-			{
-				#cylinder(d = bolt_dia - bolt_dia_clearance, h = box_bottom_height * 0.40 + extra);
-			}	
-	}
-}
 
-// Creates a positive model of the bolt holes and the bolt heads
-module bolt_holes()
+module both_bolt_holes(bolt_dia,bolt_head_dia, range = [1:num_cols])
 {
-	for(col = [1:num_cols])
+	bolt_holes(bolt_dia,bolt_head_dia, range);
+	// if even, translate over half a hex
+	if(num_rows % 2 == 0)
+		translate([get_hex_length(num_cols +0.5),get_hex_length_pt(num_rows),0])
+			rotate([0,0,180])
+				bolt_holes(bolt_dia,bolt_head_dia, range);
+	else	
+		translate([0,get_hex_length_pt(num_rows),0])
+			mirror([0,1,0])
+					bolt_holes(bolt_dia,bolt_head_dia, range);
+}
+// Creates a positive model of the bolt holes and the bolt heads
+module bolt_holes(bolt_dia,bolt_head_dia, range = [1:num_cols])
+{
+	for(col = range)
 	{
 			// Cutout bolt holes
 			translate([-hex_w/2 + col * hex_w,-hex_pt + 0.5 *(box_wall + box_clearance),box_lid_height/2-box_wall-box_clearance])
 			{
-				cylinder(d = bolt_dia + bolt_dia_clearance, h = box_bottom_height*2,center = true);
+				cylinder(d = bolt_dia, h = box_bottom_height*2,center = true);
 			translate([0,0,-(box_lid_height/2-box_wall-box_clearance)- (box_wall + box_clearance) - extra])
-				cylinder(d = bolt_head_dia + bolt_dia_clearance, h = bolt_head_thickness + extra);
+				cylinder(d = bolt_head_dia, h = bolt_head_thickness + extra);
 			}	
 	}
 }
 
 // returns height of the mock pack
 function get_mock_pack_height() 
-= 2*(holder_height-slot_height-separation) + cell_height;
+= 2 * (slot_height + separation) + cell_height;
 // returns the length of the center of one hex cell on a row to number to hexes passed to function
 function get_hex_length(num_cell)
 = (num_cell-1) * hex_w;
