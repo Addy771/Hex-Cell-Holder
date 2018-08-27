@@ -1,4 +1,5 @@
 // HEX CELL CAPS V1.5
+// https://github.com/Addy771/Hex-Cell-Holder
 // This script generates models of cell holders and caps for 
 // building battery packs using cylindrical cells. 
 // Original concept by ES user "SpinningMagnets"
@@ -7,61 +8,71 @@
 //
 // This file was created by Addy and is released as public domain
 // Contributors
-// Albert Phan
+// Albert Phan - Added boxes and optimizations
+// 
 
 
 // TODO: 
-// - add flat border option
-// - fix caps
-// - add option for space for a bms and spacers
-// - have nicer cylindrical wire hole
+// - fix and optimize para cap
+// - change wire hole to be in line with the holder and have less sharp edges.
+// - add lip between box and lid
+// - add side clearances
+// - make box bottom height to the middle of the top holder
+// - add wire strain relief clamp
+
 
 // CONFIGURATION
-////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 opening_dia = 12;   // Circular opening to expose cell 
 cell_dia = 18.6;    // Cell diameter
-cell_height = 65;	// Cell height - only used when showing a mock pack
-wall = 0.8;         // Wall thickness around a single cell. Spacing between cells is twice this amount.
+cell_height = 65;	// Cell height
+wall = 0.8;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount.\
 
-num_rows = 2;       
+num_rows = 4;       
 num_cols = 4;
 
 holder_height = 15; // Total height of cell holder
-separation = 1;   	// Separation between cell top and tab slots
-slot_height = 3.5;  // Height of all slots (3.5 mm is a good size for 14 awg solid in slots) more space may be needed for putting in a box
+separation = 1;   	// Separation between cell top and wire slots
+slot_height = 3.5;  // Height of all slots (3.5 mm is a good size for 14 awg solid in slots)
 col_slot_width = 6; // Width of slots between rows
 row_slot_width = 6; // Width of slots along rows
 
-pack_style = "rect";    // "rect" for rectangular pack, "para" for parallelogram
-wire_style = "bus";    // "strip" to make space to run nickel strips between cells. "bus" to make space for bus wires between rows
+pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram
+wire_style = "bus";		// "strip" to make space to run nickel strips between cells. "bus" to make space for bus wires between rows
 box_style = "both";		// "bolt" for bolting the box pack together, "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out), "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
-part_type = "assembled";    // "normal","mirrored", or "both". "assembled" is used for debugging  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram)
-part = "cap";   // "holder" to generate cell holders, "cap" to generate pack end caps, "box lid" to generate boxes for the holders to fit in
+part_type = "assembled";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece)
+part = "box bottom";   	// "holder" to generate cell holders, "cap" to generate pack end caps, "box lid" to generate box lid,and "box bottom" for rest of the box. 
 
-cap_wall = 1.2;
-cap_clearance = 0.8;
+cap_wall = 1.2;				// Cap wall thickness (recommend to make a multiple of nozzle dia)
+cap_clearance = 0.4;		// Clearance between holder and caps
 
-box_wall = 2.0;
-box_lid_height = 15;
+box_wall = 2.0;				// Box wall thickness (recommend to make a multiple of nozzle dia)
+box_clearance = 0.4;		// Clearance between holder and box
 
-box_clearance = 0.4;
+
+// Box clearances for wires 
+bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
+box_bottom_clearance = 6;	// Vertical space for wires on bottom of box
+box_wire_clearance_side_right = 6; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
+box_wire_clearance_side_left = 3; // Horizontal space from left side (opposite of wire hole )to the box wall for wires
+
 wire_hole_width = 15;
-wire_hole_height = 8;	// Keep smaller than box_lid_height
-wire_hole_length = 5;
+wire_hole_length = 8;
 wire_wall = 3;
-wire_clearance = 0; 	// Remove if not needed. Space for wires between holder and box (vertically)
 
-bolt_dia = 3;
-bolt_dia_clearance = 1;
-bolt_head_dia = 6;
-bolt_head_thickness = 2;	// Keep smaller than box_lid_height
 
-ziptie_width = 4;
-ziptie_thickness = 2;
+bolt_dia = 3;				// Actual dia of bolt
+bolt_dia_clearance = 1;		// Amount of extra diameter for bolt holes
+bolt_head_dia = 6;			// Actual dia of bolt head
+bolt_head_thickness = 3;	// Keep smaller than box_lid_height
+
+ziptie_width = 8;
+ziptie_thickness = 3;
 ziptie_head_width = 7;
-ziptie_head_length = 7;
-ziptie_head_thickness = 5;
+
+//ziptie_head_length = 7;		
+//ziptie_head_thickness = 5;	
 
 
 
@@ -73,13 +84,14 @@ ziptie_head_thickness = 5;
 ////////////////////////////////////////////////////////////////////////
 $fn = 50;       // Number of facets for circular parts. 
 hextra = 0.0001; // enlarge hexes by this to make them overlap
-extra = 1;    	// for proper differences
+extra = 1;    	// for proper differences()
 spacing = 4;    // Spacing between top and bottom pieces
-box_bottom_height = get_mock_pack_height() + 2 * (box_wall + box_clearance) - box_lid_height;
+box_lid_height = (holder_height)-(holder_height-slot_height)/2+(box_clearance+box_wall) + bms_clearance;	// box lid to middle of holder
+box_bottom_height = get_mock_pack_height() + 2 * (box_wall + box_clearance) - box_lid_height + bms_clearance + box_bottom_clearance;
 height_18650 = 65;
 
-hex_w = cell_dia + 2*wall;	// Width of one hex cell
-hex_pt = (hex_w/2) / cos(30); // Half the distance of point to point of a hex aka radius
+hex_w = cell_dia + 2*wall;		// Width of one hex cell
+hex_pt = (hex_w/2) / cos(30); 	// Half the distance of point to point of a hex aka radius
 
 
 if (part_type == "mirrored")
@@ -103,7 +115,14 @@ else if(part_type == "both")
 	}
     else if (part == "holder")
         regular_pack();
-    
+	else if (part == "box lid" || part == "box bottom")
+	{
+		regular_box_bottom();
+		translate([0,-(hex_pt * 2 + 2 * (box_wall + box_clearance) + spacing), 0])
+		mirror([0,0,1])
+			rotate([180,0,0])
+				regular_box_lid();
+	}
     if(num_rows % 2 == 1)   // If odd pack move pack over to nest properly
     {
 
@@ -134,13 +153,14 @@ else if(part_type == "assembled")
 {
 	
 	mock_pack();	// for debugging for now
-	translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance)])
+	translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
 		mirror([0,0,1])
 			color("green", alpha = 0.7)
 			regular_box_lid();
 	
 		color("lightgreen", alpha = 0.7)
-		regular_box_bottom();
+			translate([0,0,-box_bottom_clearance])
+				regular_box_bottom();
 
 }
 else	// if Normal
@@ -154,32 +174,50 @@ else	// if Normal
         regular_pack();
 	else if (part == "box lid")
 	{
-		regular_box_lid();
+		translate([0,get_hex_length_pt(num_cols),0])
+		mirror([0,0,1])
+			rotate([180,0,0])
+				regular_box_lid();
+	}
+	else if (part == "box bottom")
+	{
+		regular_box_bottom();
 	}
 		
 
 }
 
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 // echos and info
-echo(total_width=1.5*(hex_pt)*(num_rows-1)+hex_pt*2);
+echo(pack_height_holder = get_mock_pack_height());
+echo(total_width_holder=get_hex_length_pt(num_rows)+hex_pt*2);
+echo(box_lid_height = box_lid_height);
+echo(box_bottom_height = box_bottom_height);
 
 if (pack_style == "rect")
 {
     // Rectangular style
-    echo(total_length=hex_w*(num_cols+0.5));
+    echo(total_length_holder=hex_w*(num_cols+0.5));
 	if((num_rows % 2) == 0) // Even?
 		
-    echo("\n******************************************************* \n Top and bottom are different. Don't forget to do a mirrored part\n*******************************************************");
+    echo("\n******************************************************* \n Top and bottom are different. Don't forget to do a mirrored holder\n*******************************************************");
 }
 else if(pack_style == "para")
 {
 	// Parallelogram style
-    echo(total_length=hex_w*(num_cols+0.5*(num_rows-1)));
-	echo("\n******************************************************* \n Top and bottom are different. Don't forget to do a mirrored part\n*******************************************************");
+    echo(total_length_holder=hex_w*(num_cols+0.5*(num_rows-1)));
+	echo("\n******************************************************* \n Top and bottom are different. Don't forget to do a mirrored holder\n*******************************************************");
 }
 
-// para cap needs to be fixed. It's thin on one side.
+if (part_type == "mirrored" && (part == "box lid" || part == "box bottom"))
+	echo("\n******************************************************* \n Please choose Normal for box lid or box bottom as there aren't mirrored versions of them.\n*******************************************************");
+	 
+if (pack_style == "para" && (part == "box lid" || part == "box bottom"))
+	echo("\n******************************************************* \n There are currently no boxes for parallelogram style\n*******************************************************");
+
+
+
+// para cap needs to be fixed. It's thin on one side but will still basically work.
 module para_cap()
 {
     translate([-cap_clearance,-cap_clearance,-holder_height/2])
@@ -221,7 +259,7 @@ module para_cap()
 }
 
 
-module rect_cap(cap_wall, cap_clearance,cap_height = holder_height)
+module rect_cap(cap_wall = cap_wall, cap_clearance = cap_clearance,cap_height = holder_height)
 {
 	difference()
 	{
@@ -234,6 +272,7 @@ module rect_cap(cap_wall, cap_clearance,cap_height = holder_height)
 } 
 
 // Generates the rectangular cap positive piece used in rect_cap and box. Default height is holder height
+// height includes wall thickness and clearance
 module rect_cap_positive(cap_wall,cap_clearance,cap_height = holder_height)
 {
 	translate([-(cap_wall + cap_clearance),-(cap_wall + cap_clearance),-(cap_wall + cap_clearance)])
@@ -277,12 +316,12 @@ module regular_box_lid()
 {
 	/* To do: 
 	just one hole in corner
-	[]add support for wire hole
-	[]add zip ties to secure the two halves 
+	[x]add support for wire hole
+	[x]add zip ties to secure the two halves 
 		support for zipties inbetween hex in shape of hex
 		cutout ziptie area for flushness of ziptie
 	
-	[]add clearance for wires top and bottom
+	[x]add clearance for wires top and bottom
 	[x]add helper functions to get pack sizes 
 	[x]optimize using hull()
 	[]check on the regular caps again
@@ -312,16 +351,13 @@ module regular_box_lid()
 						
 					}
 					// Negatives
-					translate([-box_clearance,-box_clearance,0])
-					{
-						rect_cap_negative(box_wall,box_clearance,box_lid_height);
-					}
+					rect_cap_negative(box_wall,box_clearance,box_lid_height);
 					// Wire hole cutout
-					translate([(num_cols)*hex_w+box_clearance+box_wall *1.5,0,box_lid_height-box_wall-box_clearance - wire_hole_height/2 + extra])
-						cube([wire_hole_length *11 + box_wall *3,wire_hole_width,wire_hole_height], center = true);
+					translate([(num_cols)*hex_w+box_clearance+box_wall *1.5,0,bms_clearance/2+ box_lid_height/2])
+						cube([wire_hole_length *11 + box_wall *3,wire_hole_width,box_lid_height], center = true);
 				}
 				// Lid supports
-				both_lid_supports();
+				both_lid_supports(spacer = true);
 				
 			}
 			// Other cutouts of entire box lid
@@ -345,7 +381,7 @@ module regular_box_bottom()
 			union()
 			{
 				rect_cap(box_wall,box_clearance,box_bottom_height);
-				both_lid_supports(box_bottom_height);
+				both_lid_supports(box_bottom_height,spacer = true);
 			}
 
 			// Other cutouts of entire box bottom
@@ -526,22 +562,22 @@ module bus_hex()
 	}	
 }
 
-module both_lid_supports(lid_support_height = box_lid_height)
+module both_lid_supports(lid_support_height = box_lid_height, spacer = false)
 {
-	lid_support(lid_support_height);
+	lid_support(lid_support_height,spacer);
 
 	// if even, translate over half a hex
 	if(num_rows % 2 == 0)
 		translate([get_hex_length(num_cols +0.5),get_hex_length_pt(num_rows),0])
 			rotate([0,0,180])
-				lid_support(lid_support_height);
+				lid_support(lid_support_height,spacer);
 	else	
 		translate([0,get_hex_length_pt(num_rows),0])
 			mirror([0,1,0])
-					lid_support(lid_support_height);
+					lid_support(lid_support_height,spacer);
 }
 
-module lid_support(lid_support_height = box_lid_height)
+module lid_support(lid_support_height = box_lid_height,spacer = false)
 {
 	// Ziptie supports
 	difference()
@@ -552,11 +588,23 @@ module lid_support(lid_support_height = box_lid_height)
 			// add support in the shape of a hex inbetween cols
 			difference()
 			{
-				translate([-hex_w/2 + col * hex_w,-hex_pt*1.5 - box_clearance/2,-(box_wall + box_clearance)])
+				union()
+				{
+					translate([get_hex_length(col+0.5),-get_hex_length_pt(2)-box_clearance,-(box_wall + box_clearance)])
 					linear_extrude(height=lid_support_height, center=false, convexity=10)
 						polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
-				
-				translate([-hex_w/2 + col * hex_w + box_clearance,-hex_pt*2 - box_wall + extra,-box_wall - lid_support_height/2 -extra])
+
+					// Add lid spacer for when bms clearance is not 0
+					if(spacer && bms_clearance != 0)
+					{
+						translate([get_hex_length(col)+hex_w/2,-row_slot_width/2 -hex_pt/2,bms_clearance/2 - extra])
+							cube([hex_w,hex_pt,bms_clearance],center = true);
+					}
+					
+				}
+			
+				// Cutouts
+				translate([get_hex_length(col+0.5)+ box_clearance,-hex_pt*2 - box_wall + extra,-box_wall - lid_support_height/2 -extra])
 				{
 					cube([hex_pt*2 + extra,hex_pt*2,lid_support_height*5],center = true);
 				}
@@ -570,11 +618,18 @@ module lid_support(lid_support_height = box_lid_height)
 			linear_extrude(height=lid_support_height*3, center=false, convexity=10)
 					polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
 		}
-		
-
-		
+		// Cutout for spacer on end
+		if(spacer && bms_clearance != 0)
+		{
+			translate([get_hex_length(num_cols+1),-box_clearance,-(box_wall + box_clearance) - lid_support_height])
+			{
+				linear_extrude(height=lid_support_height*3, center=false, convexity=10)
+						polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
+			}
+		}
 	}
 }
+
 
 // Picks the correct hole style based on configuration
 module pick_hole_style(lid = false)
@@ -676,7 +731,7 @@ function get_hex_length(num_cell)
 function get_hex_length_pt(num_cell)
 = (num_cell-1) * hex_pt*1.5;
 
-// returns a list of the hex cell centers.
+// returns a list of the hex cell centers of a given num of rows and columns.
 function get_hex_center_points_rect(num_rows, num_cols)
 //= [[(num_rows == 1) ? 1 : 2,2],[2,4]]; // vector of points test 
 =  [
