@@ -13,10 +13,15 @@
 
 
 // TODO: 
-// - fix and optimize para cap
-// - add lip between box and lid
-// - add side clearances
-// - add wire strain relief clamp
+// [] fix and optimize para cap
+// [] fix lid support for bottom using bms clearance instead of box_bottom_clearance
+// [x] add box_lip between box and lid
+//		[x] add box_lip parameter to rectcap negative to do it
+// [x] add side clearances
+// [] add wire strain relief clamp
+// [] add abilty to remove faulty cells easily
+// [] cleanup old code that uses hex()
+
 
 
 // CONFIGURATION
@@ -40,7 +45,7 @@ pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram
 wire_style = "bus";		// "strip" to make space to run nickel strips between cells. "bus" to make space for bus wires between rows
 box_style = "both";		// "bolt" for bolting the box pack together, "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out), "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
 part_type = "assembled";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece)
-part = "box bottom";   	// "holder" to generate cell holders, "cap" to generate pack end caps, "box lid" to generate box lid,and "box bottom" for rest of the box. 
+part = "box lid";   	// "holder" to generate cell holders, "cap" to generate pack end caps, "box lid" to generate box lid,and "box bottom" for rest of the box. 
 
 cap_wall = 1.2;				// Cap wall thickness (recommend to make a multiple of nozzle dia)
 cap_clearance = 0.4;		// Clearance between holder and caps
@@ -51,12 +56,12 @@ box_clearance = 0.4;		// Clearance between holder and box
 
 // Box clearances for wires 
 bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
-box_bottom_clearance = 0;	// Vertical space for wires on bottom of box
-box_wire_side_clearance = 6; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
+box_bottom_clearance = 3;	// Vertical space for wires on bottom of box
+box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 3; // Horizontal space from left side (opposite of wire hole )to the box wall for wires
 
 wire_hole_width = 15;
-wire_hole_length = 8;
+wire_hole_length = 10;
 wire_wall = 3;
 
 
@@ -85,8 +90,8 @@ hextra = 0.0001; // enlarge hexes by this to make them overlap
 extra = 1;    	// for proper differences()
 spacing = 4;    // Spacing between top and bottom pieces
 box_lid_height = (holder_height)-(holder_height-slot_height)/2+(box_clearance+box_wall) + bms_clearance;	// box lid to middle of holder
-box_bottom_height = get_mock_pack_height() + 2 * (box_wall + box_clearance) - box_lid_height + bms_clearance + box_bottom_clearance;
-height_18650 = 65;
+box_bottom_height = get_mock_pack_height() + 2 * (box_wall + box_clearance) + bms_clearance + box_bottom_clearance - box_lid_height;
+box_lip = box_wall/2;
 
 hex_w = cell_dia + 2*wall;		// Width of one hex cell
 hex_pt = (hex_w/2) / cos(30); 	// Half the distance of point to point of a hex aka radius
@@ -143,6 +148,7 @@ else if(part_type == "both")
                     regular_cap();
 			
             else if (part == "holder")
+
                 translate([-hex_w*(num_cols - 1),1.5*(hex_pt)*num_rows + spacing,0])
                     regular_pack();
     }
@@ -150,30 +156,30 @@ else if(part_type == "both")
 else if(part_type == "assembled")
 {
 	
-	mock_pack();	// for debugging for now
-	translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
-		mirror([0,0,1])
-			color("green", alpha = 0.7)
-			regular_box_lid();
+	// mock_pack();	// for debugging for now
+	// translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
+	// 	mirror([0,0,1])
+	// 		color("green", alpha = 0.7)
+	// 		regular_box_lid();
 	
-		color("lightgreen", alpha = 0.7)
-			translate([0,0,-box_bottom_clearance])
-				regular_box_bottom();
+	// 	color("lightgreen", alpha = 0.7)
+	// 		translate([0,0,-box_bottom_clearance])
+	// 			regular_box_bottom();
 
-	translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*2,get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance),0])
-	{
-		mock_pack();	// for debugging for now
-		translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
-			mirror([0,0,1])
-				color("green", alpha = 0.7)
-				regular_box_lid();
-	}
+	// translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*2,get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance),0])
+	// {
+	// 	mock_pack();	// for debugging for now
+	// 	translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
+	// 		mirror([0,0,1])
+	// 			color("green", alpha = 0.7)
+	// 			regular_box_lid();
+	// }
 
 	translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*4,(get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance)) * 3,0])
 		{
 			mock_pack();	// for debugging for now
 			color("lightgreen", alpha = 0.7)
-				translate([0,0,-box_bottom_clearance])
+				translate([0,0,-(box_bottom_clearance + box_clearance)])
 					regular_box_bottom();
 
 		}
@@ -280,78 +286,73 @@ module para_cap()
 }
 
 
-module rect_cap(cap_wall = cap_wall, cap_clearance = cap_clearance,cap_height = holder_height,wire_side_clearance = 0, nonwire_side_clearance = 0)
+module rect_cap(cap_wall = cap_wall, cap_clearance = cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
 {
 	difference()
 	{
 		// Positive Hull	
-		rect_cap_positive(cap_wall,cap_clearance,cap_height,box_wire_side_clearance,box_nonwire_side_clearance);
+		rect_cap_positive(cap_wall,cap_clearance,cap_height,positive_x,negative_x,positive_y,negative_y);
 		// Negative Hull
-		rect_cap_negative(cap_wall,cap_clearance,cap_height,box_wire_side_clearance,box_nonwire_side_clearance);
+		rect_cap_negative(cap_wall,cap_clearance,cap_height,positive_x,negative_x,positive_y,negative_y);
 		
 	}
 } 
 
 // Generates the rectangular cap positive piece used in rect_cap and box. Default height is holder height
 // height includes wall thickness and clearance
-module rect_cap_positive(cap_wall,cap_clearance,cap_height = holder_height,wire_side_clearance = 0, nonwire_side_clearance = 0)
+// Positive_x = amount of clearance between the positive x box wall and the holder.
+// Negative_x = amount of clearance between the negative x box wall and the holder.
+// Same goes for y
+
+module rect_cap_positive(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
 {
-	translate([-(cap_wall + cap_clearance),-(cap_wall + cap_clearance),-(cap_wall + cap_clearance)])
-			
+	translate([0,0,-(cap_wall + cap_clearance)])
 		hull()
 		{
-
-			for (x = [0,1], y = [0,1])
-			{
-				// if on left hexes, translate an extra amount of box_nonwire_side_clearance
-				if(x == 0)
-				{
-					translate([x * (get_hex_length(num_cols + 0.5) + 2*(cap_wall + cap_clearance)) - nonwire_side_clearance,y *( get_hex_length_pt(num_rows) + 2*(cap_wall + cap_clearance)),0])
-					linear_extrude(height=cap_height, convexity = 10)
-					polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
-
-				}
-				// if on right hexes, add extra box_wire_side_clearance
-				if(x == 1)
-				{
-					translate([x * (get_hex_length(num_cols + 0.5) + 2*(cap_wall + cap_clearance)) + wire_side_clearance,y *( get_hex_length_pt(num_rows) + 2*(cap_wall + cap_clearance)),0])
-					linear_extrude(height=cap_height, convexity = 10)
-					polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]); 
-				}
-
-				
-			}
+			// Generate 4 hexes in each corner and hull them together
+			// [0,0] Bottom left
+			translate([-(cap_clearance + negative_x + cap_wall),-(cap_clearance + negative_y + cap_wall),0])
+			// translate([2 * cap_clearance - negative_x,2 * cap_clearance - negative_y,0])
+				hex(cap_height);
+			// [1,0] Bottom right
+			translate([get_hex_length(num_cols + 0.5) + cap_clearance + positive_x + cap_wall,-(cap_clearance + negative_y + cap_wall),0])
+				hex(cap_height);
+			// [0,1] Top left
+			translate([-(cap_clearance + negative_x + cap_wall),get_hex_length_pt(num_rows) + cap_clearance + positive_y + cap_wall,0])
+				hex(cap_height);
+			//  [1,1] Top right
+			translate([get_hex_length(num_cols + 0.5) + cap_clearance + positive_x + cap_wall,get_hex_length_pt(num_rows) + cap_clearance + positive_y + cap_wall,0])
+				hex(cap_height);
 		}
 }
 
-// Generates the rect_cap negative piece (as a positive to be cut out using difference) used in rect_cap and box
-module rect_cap_negative(cap_wall,cap_clearance,cap_height = holder_height,wire_side_clearance = 0, nonwire_side_clearance = 0)
+// Allows translates to be in if statements but still work outside of the if scope
+module move(x = 0,y = 0,z = 0)
 {
-	translate([-cap_clearance,-cap_clearance,0])
+	translate([x,y,z]) children();
+}
+
+// Generates the rect_cap negative piece (as a positive to be cut out using difference) used in rect_cap and box
+module rect_cap_negative(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
+{
 		hull()
 		{
-			for (x = [0,1], y = [0,1])
-			{
-				
+			// Generate 4 hexes in each corner and hull them together
+			// Investigate cap clearances. It looks like there is an extra cap clearance in the positive y direction
+			// [0,0] Bottom left
+			translate([-(cap_clearance + negative_x),-(cap_clearance + negative_y),0])
+			// translate([2 * cap_clearance - negative_x,2 * cap_clearance - negative_y,0])
+				hex(cap_height);
+			// [1,0] Bottom right
+			translate([get_hex_length(num_cols + 0.5) + cap_clearance + positive_x,-(cap_clearance + negative_y),0])
+				hex(cap_height);
+			// [0,1] Top left
+			translate([-(cap_clearance + negative_x),get_hex_length_pt(num_rows) + cap_clearance + positive_y,0])
+				hex(cap_height);
+			//  [1,1] Top right
+			translate([get_hex_length(num_cols + 0.5) + cap_clearance + positive_x,get_hex_length_pt(num_rows) + cap_clearance + positive_y,0])
+				hex(cap_height);
 
-				// if on left hexes, translate an extra amount of box_nonwire_side_clearance
-				if(x == 0)
-				{
-					translate([x * ((get_hex_length(num_cols + 0.5)+ 2 * cap_clearance)) - nonwire_side_clearance,y * (get_hex_length_pt(num_rows)+ 2 * cap_clearance),0])
-				linear_extrude(height=cap_height + extra, convexity = 10)
-				polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
-
-				}
-				// if on right hexes, add extra box_wire_side_clearance
-				if(x == 1)
-				{
-					translate([x * ((get_hex_length(num_cols + 0.5)+ 2 * cap_clearance)) + wire_side_clearance,y * (get_hex_length_pt(num_rows)+ 2 * cap_clearance),0])
-				linear_extrude(height=cap_height + extra, convexity = 10)
-				polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
-				}
-
-
-			}
 		}
 }
 module regular_cap()
@@ -379,7 +380,7 @@ module regular_box_lid()
 					union()
 					{
 						// Positive
-						rect_cap_positive(box_wall,box_clearance,box_lid_height,box_wire_side_clearance,box_nonwire_side_clearance);
+						rect_cap_positive(box_wall,box_clearance,box_lid_height,box_wire_side_clearance, box_nonwire_side_clearance);
 						// Wire support hole
 						translate([(num_cols)*hex_w + box_clearance + box_wall * 1.5 - wire_hole_length*8/2,0,box_lid_height-box_wall-box_clearance - (box_lid_height)/2 ])
 							cube([wire_hole_length*10,wire_hole_width + wire_wall *2,box_lid_height], center = true);
@@ -387,6 +388,7 @@ module regular_box_lid()
 					}
 					// Negatives
 					rect_cap_negative(box_wall,box_clearance,box_lid_height,box_wire_side_clearance,box_nonwire_side_clearance);
+					// todo add another rect_cap for the lip cutout
 					// Wire hole cutout
 					translate([(num_cols)*hex_w+box_clearance+box_wall *1.5,0,bms_clearance/2+ box_lid_height/2])
 						cube([wire_hole_length *11 + box_wall *3,wire_hole_width,box_lid_height], center = true);
@@ -420,6 +422,9 @@ module regular_box_bottom()
 			}
 
 			// Other cutouts of entire box bottom
+			// Lip cutout
+			translate([0,0,box_bottom_height-(box_wall+box_clearance)-box_wall])
+				rect_cap_negative(box_wall,box_clearance,box_lid_height,box_lip + box_wire_side_clearance,box_lip + box_nonwire_side_clearance,box_lip,box_lip);
 			pick_hole_style();
 		}
 	}
@@ -596,7 +601,7 @@ module bus_hex()
 		}
 	}	
 }
-
+// Generates support for the box for bolts and zipties. spacer parameter addes a spacer incase there is extra space on the boxes for wires.
 module both_lid_supports(lid_support_height = box_lid_height, spacer = false)
 {
 	lid_support(lid_support_height,spacer);
@@ -753,6 +758,13 @@ module bolt_holes(bolt_dia,bolt_head_dia, range = [1:num_cols])
 				cylinder(d = bolt_head_dia, h = bolt_head_thickness + extra);
 			}	
 	}
+}
+
+// Generates a hex of cap_height tall and hex_pt radius by default.
+module hex(cap_height = holder_height,hex_pt = hex_pt)
+{
+		linear_extrude(height=cap_height, convexity = 10)
+			polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);		
 }
 
 // returns height of the mock pack
