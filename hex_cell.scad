@@ -57,7 +57,7 @@ box_clearance = 0.4;		// Clearance between holder and box
 // Box clearances for wires 
 bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
 box_bottom_clearance = 3;	// Vertical space for wires on bottom of box
-box_wire_side_clearance = 5; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
+box_wire_side_clearance = 10; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 3; // Horizontal space from left side (opposite of wire hole )to the box wall for wires
 
 wire_hole_width = 15;
@@ -524,8 +524,7 @@ module strip_hex()
 		difference()
 		{
 			// Hex block
-			linear_extrude(height=holder_height, center=false, convexity=10)
-				polygon([ for (a=[0:5])[(hex_pt + hextra)*sin(a*60),(hex_pt + hextra)*cos(a*60)]]); 
+			hex(holder_height, hex_pt + hextra);
 					
 			// Top opening    
 			translate([0,0,-1])
@@ -561,8 +560,7 @@ module bus_hex()
 		difference()
 		{
 			// Hex block
-			linear_extrude(height=holder_height, center=false, convexity=10)
-				polygon([ for (a=[0:5])[(hex_pt + hextra)*sin(a*60),(hex_pt + hextra)*cos(a*60)]]); 
+			hex(holder_height, hex_pt + hextra);
 					
 			// Top opening    
 			translate([0,0,-1])
@@ -610,15 +608,15 @@ module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 	if(num_rows % 2 == 0)
 		translate([get_hex_length(num_cols +0.5),get_hex_length_pt(num_rows),0])
 			rotate([0,0,180])
-				lid_support(lid_support_height,spacer);
+				lid_support(lid_support_height,spacer,true);
 	else	
 		translate([0,get_hex_length_pt(num_rows),0])
 			mirror([0,1,0])
-					lid_support(lid_support_height,spacer);
+					lid_support(lid_support_height,spacer,true);
 }
 
-// add spacer parameter
-module lid_support(lid_support_height = box_lid_height,spacer = 0)
+// Mirrorcut is for mirrored supports that need a different offset due to wire and nonwire clearances
+module lid_support(lid_support_height = box_lid_height,spacer = 0, mirrorcut = false)
 {
 	// Ziptie supports
 	difference()
@@ -651,10 +649,13 @@ module lid_support(lid_support_height = box_lid_height,spacer = 0)
 
 		}
 		// Cutout for last support piece
-		translate([get_hex_length(num_cols+1) + box_clearance + box_wall + box_wire_side_clearance,-hex_pt*1.5 - 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
-		{
+		if(mirrorcut)
+		translate([get_hex_length(num_cols+1) + box_clearance + box_wall + box_nonwire_side_clearance,-hex_pt*1.5 - 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
 			hex(lid_support_height*3);
-		}
+		else
+		translate([get_hex_length(num_cols+1) + box_clearance + box_wall + box_wire_side_clearance,-hex_pt*1.5 - 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
+			hex(lid_support_height*3);
+
 		// Cutout for spacer on end
 		if(spacer)
 		{
