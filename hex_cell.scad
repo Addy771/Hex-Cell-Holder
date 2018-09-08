@@ -14,13 +14,15 @@
 
 // TODO: 
 // [] fix and optimize para cap
-// [] fix lid support for bottom using bms clearance instead of box_bottom_clearance
+// [x] fix lid support for bottom using bms clearance instead of box_bottom_clearance
 // [x] add box_lip between box and lid
 //		[x] add box_lip parameter to rectcap negative to do it
-// [x] add side clearances
+// [x] add side clearance
+// [] fix wire hole for different box_wire_clearances
 // [] add wire strain relief clamp
 // [] add abilty to remove faulty cells easily
-// [] cleanup old code that uses hex()
+// [] add default values in comments for config vars
+// [x] cleanup old code that uses hex()
 
 
 
@@ -50,14 +52,14 @@ part = "box lid";   	// "holder" to generate cell holders, "cap" to generate pac
 cap_wall = 1.2;				// Cap wall thickness (recommend to make a multiple of nozzle dia)
 cap_clearance = 0.4;		// Clearance between holder and caps
 
-box_wall = 2.0;				// Box wall thickness (recommend to make a multiple of nozzle dia)
+box_wall = 2.0;				// Box wall thickness (recommend to make at least 4 * multiple of nozzle dia)
 box_clearance = 0.4;		// Clearance between holder and box
 
 
 // Box clearances for wires 
 bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
 box_bottom_clearance = 3;	// Vertical space for wires on bottom of box
-box_wire_side_clearance = 10; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
+box_wire_side_clearance = 5; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 3; // Horizontal space from left side (opposite of wire hole )to the box wall for wires
 
 wire_hole_width = 15;
@@ -71,7 +73,7 @@ bolt_head_dia = 6;			// Actual dia of bolt head
 bolt_head_thickness = 3;	// Keep smaller than box_lid_height
 
 ziptie_width = 8;
-ziptie_thickness = 3;
+ziptie_thickness = 2.5;
 ziptie_head_width = 7;
 
 //ziptie_head_length = 7;		
@@ -300,6 +302,7 @@ module rect_cap(cap_wall = cap_wall, cap_clearance = cap_clearance,cap_height = 
 
 // Generates the rectangular cap positive piece used in rect_cap and box. Default height is holder height
 // height includes wall thickness and clearance
+// Z Origin is -(cap_wall + cap_clearance)
 // Positive_x = amount of clearance between the positive x box wall and the holder.
 // Negative_x = amount of clearance between the negative x box wall and the holder.
 // Same goes for y
@@ -324,12 +327,6 @@ module rect_cap_positive(cap_wall,cap_clearance,cap_height = holder_height,posit
 			translate([get_hex_length(num_cols + 0.5) + cap_clearance + positive_x + cap_wall,get_hex_length_pt(num_rows) + cap_clearance + positive_y + cap_wall,0])
 				hex(cap_height);
 		}
-}
-
-// Allows translates to be in if statements but still work outside of the if scope
-module move(x = 0,y = 0,z = 0)
-{
-	translate([x,y,z]) children();
 }
 
 // Generates the rect_cap negative piece (as a positive to be cut out using difference) used in rect_cap and box
@@ -381,20 +378,22 @@ module regular_box_lid()
 					{
 						// Positive
 						rect_cap_positive(box_wall,box_clearance,box_lid_height,box_wire_side_clearance, box_nonwire_side_clearance);
+						// Lip Positive
+						translate([0,0,box_lid_height-(box_wall/2) -extra])
+						rect_cap_positive(box_wall/2,box_clearance,box_wall + extra - box_clearance,box_wire_side_clearance,box_nonwire_side_clearance);
 						// Wire support hole
 						translate([(num_cols)*hex_w + box_clearance + box_wall * 1.5 - wire_hole_length*8/2,0,box_lid_height-box_wall-box_clearance - (box_lid_height)/2 ])
 							cube([wire_hole_length*10,wire_hole_width + wire_wall *2,box_lid_height], center = true);
 						
 					}
 					// Negatives
-					rect_cap_negative(box_wall,box_clearance,box_lid_height,box_wire_side_clearance,box_nonwire_side_clearance);
-					// todo add another rect_cap for the lip cutout
+					rect_cap_negative(box_wall,box_clearance,box_lid_height*2,box_wire_side_clearance,box_nonwire_side_clearance);
 					// Wire hole cutout
 					translate([(num_cols)*hex_w+box_clearance+box_wall *1.5,0,bms_clearance/2+ box_lid_height/2])
 						cube([wire_hole_length *11 + box_wall *3,wire_hole_width,box_lid_height], center = true);
 				}
 				// Lid supports
-				both_lid_supports(box_lid_height, bms_clearance);
+				both_lid_supports(box_lid_height + box_wall - box_clearance, bms_clearance);
 				
 			}
 			// Other cutouts of entire box lid
@@ -650,10 +649,10 @@ module lid_support(lid_support_height = box_lid_height,spacer = 0, mirrorcut = f
 		}
 		// Cutout for last support piece
 		if(mirrorcut)
-		translate([get_hex_length(num_cols+1) + box_clearance + box_wall + box_nonwire_side_clearance,-hex_pt*1.5 - 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
+		translate([get_hex_length(num_cols+1) + box_clearance - box_wall + box_nonwire_side_clearance,-hex_pt*1.5 - (box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
 			hex(lid_support_height*3);
 		else
-		translate([get_hex_length(num_cols+1) + box_clearance + box_wall + box_wire_side_clearance,-hex_pt*1.5 - 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
+		translate([get_hex_length(num_cols+1) + box_clearance - box_wall + box_wire_side_clearance,-hex_pt*1.5 -(box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
 			hex(lid_support_height*3);
 
 		// Cutout for spacer on end
