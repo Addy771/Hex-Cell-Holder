@@ -57,7 +57,7 @@ box_clearance = 0.4;		// Clearance between holder and box
 // Box clearances for wires 
 bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
 box_bottom_clearance = 3;	// Vertical space for wires on bottom of box
-box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
+box_wire_side_clearance = 5; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 3; // Horizontal space from left side (opposite of wire hole )to the box wall for wires
 
 wire_hole_width = 15;
@@ -156,30 +156,30 @@ else if(part_type == "both")
 else if(part_type == "assembled")
 {
 	
-	// mock_pack();	// for debugging for now
-	// translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
-	// 	mirror([0,0,1])
-	// 		color("green", alpha = 0.7)
-	// 		regular_box_lid();
+	mock_pack();	// for debugging for now
+	translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
+		mirror([0,0,1])
+			color("green", alpha = 0.7)
+			regular_box_lid();
 	
-	// 	color("lightgreen", alpha = 0.7)
-	// 		translate([0,0,-box_bottom_clearance])
-	// 			regular_box_bottom();
+		color("lightgreen", alpha = 0.7)
+			translate([0,0,-box_bottom_clearance])
+				regular_box_bottom();
 
-	// translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*2,get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance),0])
-	// {
-	// 	mock_pack();	// for debugging for now
-	// 	translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
-	// 		mirror([0,0,1])
-	// 			color("green", alpha = 0.7)
-	// 			regular_box_lid();
-	// }
+	translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*2,get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance),0])
+	{
+		mock_pack();	// for debugging for now  - 2 * (box_wall + box_clearance) - bms_clearance
+		translate([0,0,get_mock_pack_height() + bms_clearance])
+			mirror([0,0,1])
+				color("green", alpha = 0.7)
+				regular_box_lid();
+	}
 
 	translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*4,(get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance)) * 3,0])
 		{
 			mock_pack();	// for debugging for now
 			color("lightgreen", alpha = 0.7)
-				translate([0,0,-(box_bottom_clearance + box_clearance)])
+				translate([0,0,-(box_bottom_clearance)])
 					regular_box_bottom();
 
 		}
@@ -394,7 +394,7 @@ module regular_box_lid()
 						cube([wire_hole_length *11 + box_wall *3,wire_hole_width,box_lid_height], center = true);
 				}
 				// Lid supports
-				both_lid_supports(spacer = true);
+				both_lid_supports(box_lid_height, bms_clearance);
 				
 			}
 			// Other cutouts of entire box lid
@@ -418,7 +418,7 @@ module regular_box_bottom()
 			union()
 			{
 				rect_cap(box_wall,box_clearance,box_bottom_height,box_wire_side_clearance,box_nonwire_side_clearance);
-				both_lid_supports(box_bottom_height,spacer = true);
+				both_lid_supports(box_bottom_height,box_bottom_clearance);
 			}
 
 			// Other cutouts of entire box bottom
@@ -602,7 +602,7 @@ module bus_hex()
 	}	
 }
 // Generates support for the box for bolts and zipties. spacer parameter addes a spacer incase there is extra space on the boxes for wires.
-module both_lid_supports(lid_support_height = box_lid_height, spacer = false)
+module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 {
 	lid_support(lid_support_height,spacer);
 
@@ -617,7 +617,8 @@ module both_lid_supports(lid_support_height = box_lid_height, spacer = false)
 					lid_support(lid_support_height,spacer);
 }
 
-module lid_support(lid_support_height = box_lid_height,spacer = false)
+// add spacer parameter
+module lid_support(lid_support_height = box_lid_height,spacer = 0)
 {
 	// Ziptie supports
 	difference()
@@ -631,20 +632,17 @@ module lid_support(lid_support_height = box_lid_height,spacer = false)
 				union()
 				{
 					translate([get_hex_length(col+0.5),-get_hex_length_pt(2)-box_clearance,-(box_wall + box_clearance)])
-					linear_extrude(height=lid_support_height, center=false, convexity=10)
-						polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
-
-					// Add lid spacer for when bms clearance is not 0
-					if(spacer && bms_clearance != 0)
+					hex(lid_support_height);
+					if(spacer)
 					{
-						translate([get_hex_length(col)+hex_w/2,-row_slot_width/2 -hex_pt/2,bms_clearance/2 - extra])
-							cube([hex_w,hex_pt,bms_clearance],center = true);
+						translate([get_hex_length(col)+hex_w/2,-row_slot_width/2 -hex_pt/2,spacer/2])
+							cube([hex_w,hex_pt,spacer],center = true);
 					}
 					
 				}
 			
 				// Cutouts
-				translate([get_hex_length(col+0.5)+ box_clearance,-hex_pt*2 - box_wall + extra,-box_wall - lid_support_height/2 -extra])
+				translate([get_hex_length(col+0.5),-hex_pt*2 - (box_wall + box_clearance) + box_wall/2,-box_wall - lid_support_height/2 -extra])
 				{
 					cube([hex_pt*2 + extra,hex_pt*2,lid_support_height*5],center = true);
 				}
@@ -653,18 +651,16 @@ module lid_support(lid_support_height = box_lid_height,spacer = false)
 
 		}
 		// Cutout for last support piece
-		translate([get_hex_length(num_cols+1) + box_clearance + box_wall,-hex_pt*1.5 - 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
+		translate([get_hex_length(num_cols+1) + box_clearance + box_wall + box_wire_side_clearance,-hex_pt*1.5 - 0.5 *(box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
 		{
-			linear_extrude(height=lid_support_height*3, center=false, convexity=10)
-					polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
+			hex(lid_support_height*3);
 		}
 		// Cutout for spacer on end
-		if(spacer && bms_clearance != 0)
+		if(spacer)
 		{
 			translate([get_hex_length(num_cols+1),-box_clearance,-(box_wall + box_clearance) - lid_support_height])
 			{
-				linear_extrude(height=lid_support_height*3, center=false, convexity=10)
-						polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);
+				hex(lid_support_height * 3);
 			}
 		}
 	}
