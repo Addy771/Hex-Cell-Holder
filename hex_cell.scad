@@ -18,8 +18,10 @@
 // [x] add box_lip between box and lid
 //		[x] add box_lip parameter to rectcap negative to do it
 // [x] add side clearance
-// [] fix wire hole for different box_wire_clearances
-// [] add wire strain relief clamp
+// [x] fix wire hole for different box_wire_clearances
+// [] fix wire_hole_length for large values
+// [x] add wire strain relief clamp
+// [] add clamp to part_type
 // [] add abilty to remove faulty cells easily
 // [] add default values in comments for config vars
 // [x] cleanup old code that uses hex()
@@ -59,12 +61,17 @@ box_clearance = 0.4;		// Clearance between holder and box
 // Box clearances for wires 
 bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
 box_bottom_clearance = 3;	// Vertical space for wires on bottom of box
-box_wire_side_clearance = 5; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
-box_nonwire_side_clearance = 3; // Horizontal space from left side (opposite of wire hole )to the box wall for wires
+box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
+box_nonwire_side_clearance = 3; // Horizontal space from left side (opposite of wire hole) to the box wall for wires
 
 wire_hole_width = 15;
 wire_hole_length = 10;
-wire_wall = 3;
+wire_diameter = 5;			// Diameter of 1 power wire used in the strain relief clamps
+wire_top_wall = 4;			// Thickness of top wire wall
+wire_clamp_bolt_dia = 3;
+clamp_plate_height = 4;		
+clamp_factor = 0.7;			// Factor of wire diameter to be clamped. Higher number is less clamping force (default=0.7 max=1.0)
+
 
 
 bolt_dia = 3;				// Actual dia of bolt
@@ -94,10 +101,12 @@ spacing = 4;    // Spacing between top and bottom pieces
 box_lid_height = (holder_height)-(holder_height-slot_height)/2+(box_clearance+box_wall) + bms_clearance;	// box lid to middle of holder
 box_bottom_height = get_mock_pack_height() + 2 * (box_wall + box_clearance) + bms_clearance + box_bottom_clearance - box_lid_height;
 box_lip = box_wall/2;
-
 hex_w = cell_dia + 2*wall;		// Width of one hex cell
 hex_pt = (hex_w/2) / cos(30); 	// Half the distance of point to point of a hex aka radius
 
+
+wire_clamp_support = hex_pt + box_clearance + box_wall - wire_hole_width/2 ;		// Place for strain relief clamp to screw into
+wire_clamp_nib_dia = 5;
 
 if (part_type == "mirrored")
 {
@@ -161,8 +170,15 @@ else if(part_type == "assembled")
 	mock_pack();	// for debugging for now
 	translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
 		mirror([0,0,1])
+		{
 			color("green", alpha = 0.7)
 			regular_box_lid();
+			color("orange", alpha = 0.7)
+					translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
+						mirror([0,0,1])
+							wire_clamp();
+		}
+			
 	
 		color("lightgreen", alpha = 0.7)
 			translate([0,0,-box_bottom_clearance])
@@ -173,8 +189,16 @@ else if(part_type == "assembled")
 		mock_pack();	// for debugging for now  - 2 * (box_wall + box_clearance) - bms_clearance
 		translate([0,0,get_mock_pack_height() + bms_clearance])
 			mirror([0,0,1])
+			{
 				color("green", alpha = 0.7)
 				regular_box_lid();
+				color("orange", alpha = 0.7)
+					translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
+						mirror([0,0,1])
+							wire_clamp();
+			}
+	
+		
 	}
 
 	translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*4,(get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance)) * 3,0])
@@ -382,15 +406,21 @@ module regular_box_lid()
 						translate([0,0,box_lid_height-(box_wall/2) -extra])
 						rect_cap_positive(box_wall/2,box_clearance,box_wall + extra - box_clearance,box_wire_side_clearance,box_nonwire_side_clearance);
 						// Wire support hole
-						translate([(num_cols)*hex_w + box_clearance + box_wall * 1.5 - wire_hole_length*8/2,0,box_lid_height-box_wall-box_clearance - (box_lid_height)/2 ])
-							cube([wire_hole_length*10,wire_hole_width + wire_wall *2,box_lid_height], center = true);
+						translate([(num_cols)*hex_w + box_clearance + box_wire_side_clearance + box_wall - wire_hole_length*8/2,0,box_lid_height-box_wall-box_clearance - (box_lid_height)/2])
+							cube([wire_hole_length*10,wire_hole_width + 2* (wire_clamp_support),box_lid_height], center = true);
+							
 						
 					}
 					// Negatives
 					rect_cap_negative(box_wall,box_clearance,box_lid_height*2,box_wire_side_clearance,box_nonwire_side_clearance);
 					// Wire hole cutout
-					translate([(num_cols)*hex_w+box_clearance+box_wall *1.5,0,bms_clearance/2+ box_lid_height/2])
+					translate([(num_cols)*hex_w+box_clearance+box_wall+box_wire_side_clearance,0,wire_top_wall - box_wall + box_lid_height/2])
 						cube([wire_hole_length *11 + box_wall *3,wire_hole_width,box_lid_height], center = true);
+					// Strain relief bolt cutouts
+					translate([(num_cols)*hex_w+box_clearance+box_wall + box_wire_side_clearance + wire_hole_length/2,(wire_hole_width + wire_clamp_support)/2,0])
+						cylinder(d = wire_clamp_bolt_dia * 0.9, h=wire_top_wall + box_lid_height);
+					translate([(num_cols)*hex_w+box_clearance+box_wall + box_wire_side_clearance + wire_hole_length/2,-(wire_hole_width + wire_clamp_support)/2,0])
+						cylinder(d = wire_clamp_bolt_dia * 0.9, h=wire_top_wall + box_lid_height);
 				}
 				// Lid supports
 				both_lid_supports(box_lid_height + box_wall - box_clearance, bms_clearance);
@@ -754,6 +784,41 @@ module bolt_holes(bolt_dia,bolt_head_dia, range = [1:num_cols])
 				cylinder(d = bolt_head_dia, h = bolt_head_thickness + extra);
 			}	
 	}
+}
+
+// Part which clamps down the wires for strain relief
+// Z origin is top of the mounting plate
+module wire_clamp()
+{
+	translate([0,0,-clamp_plate_height/2])
+	{
+		difference()
+		{
+			union()
+			{
+				clamp_height = box_lid_height - wire_top_wall - box_clearance - wire_diameter * clamp_factor;
+				cube([wire_hole_length,wire_hole_width + 2 * wire_clamp_support,clamp_plate_height],center = true);
+				// To top of plate
+				translate([0,0,wire_top_wall/2])
+				{
+					translate([0,0,(clamp_height - wire_clamp_nib_dia/2)/2]) 
+						cube([wire_hole_length,wire_hole_width - extra, clamp_height - wire_clamp_nib_dia/2], true);
+					translate([0,(wire_hole_width - extra)/2,(clamp_height) - wire_clamp_nib_dia/2])
+						rotate([90,0,0])
+							cylinder(d = wire_clamp_nib_dia, h = wire_hole_width - extra);
+				}
+				
+			}
+			// Bolt hole cutout
+			translate([0,(wire_hole_width + wire_clamp_support)/2,-wire_top_wall])
+				cylinder(d = wire_clamp_bolt_dia + bolt_dia_clearance, h = wire_top_wall * 2);
+			translate([0,-(wire_hole_width + wire_clamp_support)/2,-wire_top_wall])
+				cylinder(d = wire_clamp_bolt_dia + bolt_dia_clearance, h = wire_top_wall * 2);
+		}
+		
+		
+	}
+
 }
 
 // Generates a hex of cap_height tall and hex_pt radius by default.
