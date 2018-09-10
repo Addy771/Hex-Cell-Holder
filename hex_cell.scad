@@ -19,43 +19,55 @@
 //		[x] add box_lip parameter to rectcap negative to do it
 // [x] add side clearance
 // [x] fix wire hole for different box_wire_clearances
-// [] fix wire_hole_length for large values
+// [x] fix wire_hole_length for large values
 // [x] add wire strain relief clamp
-// [] add clamp to part_type
+// [x] add clamp to part_type
 // [] add abilty to remove faulty cells easily
-// [] add default values in comments for config vars
+// [x] add default values in comments for config vars
 // [x] cleanup old code that uses hex()
 
 
-
-// CONFIGURATION
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BASIC CONFIGURATION
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-opening_dia = 12;   // Circular opening to expose cell
-cell_dia = 18.6;    // Cell diameter
-cell_height = 65;	// Cell height
-wall = 0.8;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount.
+
+cell_dia = 18.6;    // Cell diameter default = 18.6 for 18650s
+cell_height = 65;	// Cell height default = 65 for 18650s
+wall = 0.8;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 0.8
 
 num_rows = 4;       
 num_cols = 4;
 
-holder_height = 15; // Total height of cell holder
-separation = 1;   	// Separation between cell top and wire slots
-slot_height = 3.5;  // Height of all slots (3.5 mm is a good size for 14 awg solid in slots)
-col_slot_width = 6; // Width of slots between rows
-row_slot_width = 6; // Width of slots along rows
+holder_height = 15; // Total height of cell holder default = 15
+slot_height = 3.5;  // Height of all slots default = 3.5 mm is a good size for 14 awg solid in slots
+col_slot_width = 6; // Width of slots between rows default = 6
+row_slot_width = 6; // Width of slots along rows default = 6
 
-pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram
-wire_style = "bus";		// "strip" to make space to run nickel strips between cells. "bus" to make space for bus wires between rows
-box_style = "both";		// "bolt" for bolting the box pack together, "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out), "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
-part_type = "assembled";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece)
-part = "box lid";   	// "holder" to generate cell holders, "cap" to generate pack end caps, "box lid" to generate box lid,and "box bottom" for rest of the box. 
+pack_style = "para";	// "rect" for rectangular pack, "para" for parallelogram
 
-cap_wall = 1.2;				// Cap wall thickness (recommend to make a multiple of nozzle dia)
-cap_clearance = 0.4;		// Clearance between holder and caps
+wire_style = "strip";		// "strip" to make space to run nickel strips between cells.
+						// "bus" to make space for bus wires between rows
 
-box_wall = 2.0;				// Box wall thickness (recommend to make at least 4 * multiple of nozzle dia)
-box_clearance = 0.4;		// Clearance between holder and box
+box_style = "both";		// "bolt" for bolting the box pack together
+						// "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out), 
+						// "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
+
+part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
+
+part = "cap";   		// "holder" to generate cell holders, 
+						// "cap" to generate pack end caps, 
+						// "box lid" to generate box lid
+						// "box bottom" for box bottom
+						// "wire clamp" for strain relief clamp
+						
+						// Note: There are no boxes for parallelogram packs.
+
+
+cap_wall = 1.2;				// Cap wall thickness (default = 1.2 recommend to make a multiple of nozzle dia)
+cap_clearance = 0.4;		// Clearance between holder and caps default = 0.4
+box_wall = 2.0;				// Box wall thickness (default = 2.0 recommend to make at least 4 * multiple of nozzle dia)
+box_clearance = 0.4;		// Clearance between holder and box default = 0.4
 
 
 // Box clearances for wires 
@@ -64,27 +76,27 @@ box_bottom_clearance = 3;	// Vertical space for wires on bottom of box
 box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 3; // Horizontal space from left side (opposite of wire hole) to the box wall for wires
 
-wire_hole_width = 15;
-wire_hole_length = 10;
-wire_diameter = 5;			// Diameter of 1 power wire used in the strain relief clamps
-wire_top_wall = 4;			// Thickness of top wire wall
-wire_clamp_bolt_dia = 3;
-clamp_plate_height = 4;		
+wire_diameter = 5;			// Diameter of 1 power wire used in the strain relief clamps default = 5 for 10 awg stranded silicon wire
+wire_clamp_bolt_dia = 3;	// Bolt dia used for clamping wire default = 3 for M3 bolt
 clamp_factor = 0.7;			// Factor of wire diameter to be clamped. Higher number is less clamping force (default=0.7 max=1.0)
-
-
-
-bolt_dia = 3;				// Actual dia of bolt
-bolt_dia_clearance = 1;		// Amount of extra diameter for bolt holes
-bolt_head_dia = 6;			// Actual dia of bolt head
-bolt_head_thickness = 3;	// Keep smaller than box_lid_height
-
+bolt_dia = 3;				// Actual dia of bolt default = 3 for M3 bolt
+bolt_head_dia = 6;			// Actual dia of bolt head default = 6 for M3 socket head bolt
+bolt_head_thickness = 3;	// Thickness (height) of bolt head default = 3 for M3 Socket head
 ziptie_width = 8;
 ziptie_thickness = 2.5;
-ziptie_head_width = 7;
 
-//ziptie_head_length = 7;		
-//ziptie_head_thickness = 5;	
+
+///////////////////////////////////////////////////////////////////////////////////
+// ADVANCED CONFIGURATION for users that need to customize everything
+//////////////////////////////////////////////////////////////////////////////////
+
+opening_dia = 12;   // Circular opening to expose cell
+separation = 1;   	// Separation between cell top and wire slots
+wire_hole_width = 15;
+wire_hole_length = 10;
+wire_top_wall = 4;			// Thickness of top wire wall default = 4mm
+clamp_plate_height = 4;		
+bolt_dia_clearance = 1;		// Amount of extra diameter for bolt holes
 
 
 
@@ -218,6 +230,7 @@ else	// if Normal
     if (part == "cap")  
 	{
         regular_cap();
+		mock_pack();
 	}
     
     else if (part == "holder")
@@ -233,7 +246,8 @@ else	// if Normal
 	{
 		regular_box_bottom();
 	}
-		
+	else if (part == "wire clamp")
+		wire_clamp();
 
 }
 
