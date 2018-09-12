@@ -53,9 +53,9 @@ box_style = "both";		// "bolt" for bolting the box pack together
 						// "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out), 
 						// "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
 
-part_type = "both";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
+part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "box lid";   		// "holder" to generate cell holders, 
+part = "holder";   		// "holder" to generate cell holders, 
 						// "cap" to generate pack end caps, 
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
@@ -66,6 +66,7 @@ part = "box lid";   		// "holder" to generate cell holders,
 
 cap_wall = 1.2;				// Cap wall thickness (default = 1.2 recommend to make a multiple of nozzle dia)
 cap_clearance = 0.4;		// Clearance between holder and caps default = 0.4
+
 box_wall = 2.0;				// Box wall thickness (default = 2.0 recommend to make at least 4 * multiple of nozzle dia)
 box_clearance = 0.4;		// Clearance between holder and box default = 0.4
 
@@ -90,13 +91,15 @@ ziptie_thickness = 2.5;
 // ADVANCED CONFIGURATION for users that need to customize everything
 //////////////////////////////////////////////////////////////////////////////////
 
-opening_dia = 12;   // Circular opening to expose cell
-separation = 1;   	// Separation between cell top and wire slots
+opening_dia = cell_dia;   		// Circular opening to expose cell default = 12
+separation = 1;   			// Separation between cell top and wire slots default = 1 
 wire_hole_width = 15;
-wire_hole_length = 10;
+wire_hole_length = 10;		// default = 10
 wire_top_wall = 4;			// Thickness of top wire wall default = 4mm
-clamp_plate_height = 4;		
-bolt_dia_clearance = 1;		// Amount of extra diameter for bolt holes
+clamp_plate_height = 4;		// default = 4
+bolt_dia_clearance = 1;		// Amount of extra diameter for bolt holes default = 1
+cell_tab_width = 3;			// Width of tab that keeps the cell in the holder
+cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder
 
 
 
@@ -115,6 +118,7 @@ box_bottom_height = get_mock_pack_height() + 2 * (box_wall + box_clearance) + bm
 box_lip = box_wall/2;
 hex_w = cell_dia + 2*wall;		// Width of one hex cell
 hex_pt = (hex_w/2) / cos(30); 	// Half the distance of point to point of a hex aka radius
+cell_radius = cell_dia/2;
 
 
 wire_clamp_support = hex_pt + box_clearance + box_wall - wire_hole_width/2 ;		// Place for strain relief clamp to screw into
@@ -224,6 +228,10 @@ else if(part_type == "assembled")
 
 				
 
+}
+else if(part_type == "mock pack")
+{
+	mock_pack();
 }
 else	// if Normal
 {
@@ -583,15 +591,19 @@ module pick_hex()
         strip_hex();
 }
 
-
+// TODO: add cell tabs to allow for easy removal of cells
 module strip_hex()
 {
 	mirror([0,0,1])
 	{
 		difference()
 		{
-			// Hex block
-			hex(holder_height, hex_pt + hextra);
+			union()
+			{
+				// Hex block
+				hex(holder_height, hex_pt + hextra);
+			}
+			
 					
 			// Top opening    
 			translate([0,0,-1])
@@ -613,7 +625,20 @@ module strip_hex()
 			// Row slot 
 			translate([0,0,holder_height]) 
 				cube([hex_w+1,row_slot_width,2*slot_height], center=true);   
-		}   
+		} 
+		// Tabs
+		for(a = [1,3,5])
+		{
+			intersection()
+			{
+				translate([ cell_radius*sin(a*60),cell_radius*cos(a*60),holder_height-(separation/2 + slot_height)])
+				rotate([0,0,a*30])cube([cell_tab_length * 2 + wall, cell_tab_width, separation],center=true);
+				hex(holder_height, hex_pt + hextra);
+			}
+			//]
+
+			
+		}  
 	}
 }
 
