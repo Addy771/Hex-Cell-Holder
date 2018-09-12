@@ -13,7 +13,7 @@
 
 
 // TODO: 
-// [] fix and optimize para cap
+// [x] fix and optimize para cap
 // [x] fix lid support for bottom using bms clearance instead of box_bottom_clearance
 // [x] add box_lip between box and lid
 //		[x] add box_lip parameter to rectcap negative to do it
@@ -44,7 +44,7 @@ slot_height = 3.5;  // Height of all slots default = 3.5 mm is a good size for 1
 col_slot_width = 6; // Width of slots between rows default = 6
 row_slot_width = 6; // Width of slots along rows default = 6
 
-pack_style = "para";	// "rect" for rectangular pack, "para" for parallelogram
+pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram
 
 wire_style = "strip";		// "strip" to make space to run nickel strips between cells.
 						// "bus" to make space for bus wires between rows
@@ -53,9 +53,9 @@ box_style = "both";		// "bolt" for bolting the box pack together
 						// "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out), 
 						// "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
 
-part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
+part_type = "both";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "cap";   		// "holder" to generate cell holders, 
+part = "box lid";   		// "holder" to generate cell holders, 
 						// "cap" to generate pack end caps, 
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
@@ -381,7 +381,7 @@ module rect_cap_positive(cap_wall,cap_clearance,cap_height = holder_height,posit
 		}
 }
 
-// Generates the rect_cap negative piece (as a positive to be cut out using difference) used in rect_cap and box
+// Generates the rect_cap negative piece (as a positive to be cut out using difference) used in rect_cap and box. This is basically the same as rect_cap_positive but the hexes are smaller by cap_wall
 // TODO: With rect_cap_negative now very similiar to rect_cap_positive, is it really required anymore?
 module rect_cap_negative(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
 {
@@ -462,7 +462,6 @@ module regular_box_lid()
     else if (pack_style == "para")
     // para box;
 	;
-	
 }
 
 module regular_box_bottom()
@@ -674,10 +673,10 @@ module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 }
 
 // Mirrorcut is for mirrored supports that need a different offset due to wire and nonwire clearances differences
-module lid_support(lid_support_height = box_lid_height,spacer = 0, mirrorcut = false)
+module lid_support(lid_support_height = box_lid_height,spacer = 0)
 {
 	// Ziptie supports
-	difference()
+	intersection()
 	{
 		for(col = [1:num_cols])
 		{
@@ -706,22 +705,8 @@ module lid_support(lid_support_height = box_lid_height,spacer = 0, mirrorcut = f
 
 
 		}
-		// Cutout for last support piece
-		if(mirrorcut)
-		translate([get_hex_length(num_cols+1) + box_clearance - box_wall + box_nonwire_side_clearance,-hex_pt*1.5 - (box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
-			hex(lid_support_height*3);
-		else
-		translate([get_hex_length(num_cols+1) + box_clearance - box_wall + box_wire_side_clearance,-hex_pt*1.5 -(box_wall + box_clearance),-(box_wall + box_clearance) - lid_support_height])
-			hex(lid_support_height*3);
-
-		// Cutout for spacer on end
-		if(spacer)
-		{
-			translate([get_hex_length(num_cols+1),-box_clearance,-(box_wall + box_clearance) - lid_support_height])
-			{
-				hex(lid_support_height * 3);
-			}
-		}
+		// Remove all pieces outside of the box
+		rect_cap_positive(box_wall/2,box_clearance,lid_support_height + extra,box_wire_side_clearance,box_nonwire_side_clearance);
 	}
 }
 
