@@ -36,7 +36,7 @@ cell_dia = 18.6;    // Cell diameter default = 18.6 for 18650s
 cell_height = 65;	// Cell height default = 65 for 18650s
 wall = 0.8;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 0.8
 
-num_rows = 4;       
+num_rows = 3;       
 num_cols = 4;
 
 holder_height = 15; // Total height of cell holder default = 15
@@ -284,45 +284,60 @@ if (pack_style == "para" && (part == "box lid" || part == "box bottom"))
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// para cap needs to be fixed. It's thin on one side but will still basically work.
-module para_cap()
+// This module generates a cap for a para style holder
+module para_cap(cap_wall = cap_wall, cap_clearance = cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
 {
-    translate([-cap_clearance,-cap_clearance,-holder_height/2])
-        difference()
-        {
-            
-            translate([-cap_clearance/2,-cap_clearance/2,-(cap_wall)])
-                minkowski()
-                {
+	difference()
+	{
+		// Positive Hull	
+		para_cap_positive(cap_wall,cap_clearance,cap_height,positive_x,negative_x,positive_y,negative_y);
+		// Negative Hull
+		para_cap_negative(cap_wall,cap_clearance,cap_height,positive_x,negative_x,positive_y,negative_y);
+	}
+}
 
-                    linear_extrude(height=extra + cap_wall, center=false, convexity=10)
-                        polygon([
-                            [0,0],
-                            [hex_w*(num_rows-1)*0.5,1.5*(hex_pt)*(num_rows-1)],
-                            [hex_w*(num_rows-1)*0.5+hex_w*(num_cols-1),1.5*(hex_pt)*(num_rows-1)],
-                            [hex_w*(num_cols-1),0]]
-                        );
-                    
-                    hex_pt2 = (hex_w/2 + extra + cap_clearance + cap_wall) / cos(30);
-                    linear_extrude(height=holder_height, center=true, convexity=10)
-                        polygon([ for (a=[0:5])[hex_pt2*sin(a*60),hex_pt2*cos(a*60)]]); 
-                }    
-            
-            minkowski()
-            {
-                linear_extrude(height=extra*2, center=false, convexity=10)
-                    polygon([
-                        [0,0],
-                        [hex_w*(num_rows-1)*0.5,1.5*(hex_pt)*(num_rows-1)],
-                        [hex_w*(num_rows-1)*0.5+hex_w*(num_cols-1),1.5*(hex_pt)*(num_rows-1)],
-                        [hex_w*(num_cols-1),0]]
-                    );
-                hex_pt2 = (hex_w/2 + extra + cap_clearance) / cos(30);
-                linear_extrude(height=holder_height, center=true, convexity=10)
-                    polygon([ for (a=[0:5])[hex_pt2*sin(a*60),hex_pt2*cos(a*60)]]); 
-            }
-                
-        }
+// Generates a positive of the paracap which is to be cut out with the negative
+module para_cap_positive(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
+{
+	translate([0,0,-(cap_wall + cap_clearance)])
+		hull()
+		{
+			// Generate 4 hexes in each corner and hull them together
+			// [0,0] Bottom left
+			translate([-negative_x,-negative_y,0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
+			// [1,0] Bottom right
+			translate([get_hex_length(num_cols)+ positive_x,-(negative_y),0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
+			// [0,1] Top left
+			translate([get_hex_length(num_rows/2 +0.5)-(negative_x),get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
+			//  [1,1] Top right
+			translate([get_hex_length(num_cols + num_rows/2-0.5) + positive_x,get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
+		}
+}
+
+// Generates negative of the paracap to be cut out in a difference()
+module para_cap_negative(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
+{
+		hull()
+		{
+			// Generate 4 hexes in each corner and hull them together
+			// [0,0] Bottom left
+			translate([-negative_x,-negative_y,0])
+				hex(cap_height,hex_pt + cap_clearance);
+			// [1,0] Bottom right
+			translate([get_hex_length(num_cols)+ positive_x,-(negative_y),0])
+				hex(cap_height,hex_pt + cap_clearance);
+			// [0,1] Top left
+			translate([get_hex_length(num_rows/2 +0.5)-(negative_x),get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt  + cap_clearance);
+			//  [1,1] Top right
+			translate([get_hex_length(num_cols + num_rows/2-0.5) + positive_x,get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt + cap_clearance);
+
+		}
 }
 
 
@@ -352,42 +367,40 @@ module rect_cap_positive(cap_wall,cap_clearance,cap_height = holder_height,posit
 		{
 			// Generate 4 hexes in each corner and hull them together
 			// [0,0] Bottom left
-			translate([-(cap_clearance + negative_x + cap_wall),-(cap_clearance + negative_y + cap_wall),0])
-			// translate([2 * cap_clearance - negative_x,2 * cap_clearance - negative_y,0])
-				hex(cap_height);
+			translate([-negative_x,-negative_y,0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
 			// [1,0] Bottom right
-			translate([get_hex_length(num_cols + 0.5) + cap_clearance + positive_x + cap_wall,-(cap_clearance + negative_y + cap_wall),0])
-				hex(cap_height);
+			translate([get_hex_length(num_cols + 0.5)+ positive_x,-(negative_y),0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
 			// [0,1] Top left
-			translate([-(cap_clearance + negative_x + cap_wall),get_hex_length_pt(num_rows) + cap_clearance + positive_y + cap_wall,0])
-				hex(cap_height);
+			translate([-(negative_x),get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
 			//  [1,1] Top right
-			translate([get_hex_length(num_cols + 0.5) + cap_clearance + positive_x + cap_wall,get_hex_length_pt(num_rows) + cap_clearance + positive_y + cap_wall,0])
-				hex(cap_height);
+			translate([get_hex_length(num_cols + 0.5) + positive_x,get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
 		}
 }
 
 // Generates the rect_cap negative piece (as a positive to be cut out using difference) used in rect_cap and box
+// TODO: With rect_cap_negative now very similiar to rect_cap_positive, is it really required anymore?
 module rect_cap_negative(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
 {
 		hull()
 		{
-			// Generate 4 hexes in each corner and hull them together
-			// Investigate cap clearances. It looks like there is an extra cap clearance in the positive y direction
-			// [0,0] Bottom left
-			translate([-(cap_clearance + negative_x),-(cap_clearance + negative_y),0])
-			// translate([2 * cap_clearance - negative_x,2 * cap_clearance - negative_y,0])
-				hex(cap_height);
-			// [1,0] Bottom right
-			translate([get_hex_length(num_cols + 0.5) + cap_clearance + positive_x,-(cap_clearance + negative_y),0])
-				hex(cap_height);
-			// [0,1] Top left
-			translate([-(cap_clearance + negative_x),get_hex_length_pt(num_rows) + cap_clearance + positive_y,0])
-				hex(cap_height);
-			//  [1,1] Top right
-			translate([get_hex_length(num_cols + 0.5) + cap_clearance + positive_x,get_hex_length_pt(num_rows) + cap_clearance + positive_y,0])
-				hex(cap_height);
 
+			// Generate 4 hexes in each corner and hull them together
+			// [0,0] Bottom left
+			translate([-negative_x,-negative_y,0])
+				hex(cap_height,hex_pt + cap_clearance);
+			// [1,0] Bottom right
+			translate([get_hex_length(num_cols + 0.5)+ positive_x,-(negative_y),0])
+				hex(cap_height,hex_pt + cap_clearance);
+			// [0,1] Top left
+			translate([-(negative_x),get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt  + cap_clearance);
+			//  [1,1] Top right
+			translate([get_hex_length(num_cols + 0.5) + positive_x,get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt + cap_clearance);
 		}
 }
 module regular_cap()
@@ -467,7 +480,7 @@ module regular_box_bottom()
 			// Other cutouts of entire box bottom
 			// Lip cutout
 			translate([0,0,box_bottom_height-(box_wall+box_clearance)-box_wall])
-				rect_cap_negative(box_wall,box_clearance,box_lid_height,box_lip + box_wire_side_clearance,box_lip + box_nonwire_side_clearance,box_lip,box_lip);
+				rect_cap_negative(box_wall,box_clearance + box_lip,box_lid_height,box_wire_side_clearance,box_nonwire_side_clearance);
 			pick_hole_style();
 		}
 	}
@@ -483,14 +496,26 @@ module mock_pack()
 	
 	color("blue") render(1)regular_pack();
 	// add 18650s
-	for(x = get_hex_center_points_rect(num_rows,num_cols))
+	if(pack_style == "rect")
+	{
+		for(x = get_hex_center_points_rect(num_rows,num_cols))
 		 {
 			// Iterate through each hex center and place a cell
-			// find out proper z height for translate  holder_height-slot_height-separation?
 			translate([x[0],x[1],slot_height + separation])
 				color("CornflowerBlue")mock_cell();
 
 		 }
+	}
+	else if(pack_style == "para")
+	{
+		for(x = get_hex_center_points_para(num_rows,num_cols))
+		 {
+			// Iterate through each hex center and place a cell
+			translate([x[0],x[1],slot_height + separation])
+				color("CornflowerBlue")mock_cell();
+		 }
+	}
+	
 	color("blue")
 		translate([0,0,slot_height + separation + cell_height + slot_height + separation])
 			mirror([0,0,1])
@@ -574,9 +599,7 @@ module strip_hex()
 				cylinder(h=holder_height+2,d=opening_dia);
 			  
 			// Cell space    
-			//#translate([0,0,-holder_height])
-				//cylinder(h=2*(holder_height-slot_height),d=cell_dia);
-				cylinder(h=2 *(holder_height-slot_height-separation) ,d=cell_dia, center=true);
+			cylinder(h=2 *(holder_height-slot_height-separation) ,d=cell_dia, center=true);
 			
 			// 1st column slot
 			rotate([0,0,60])
@@ -610,9 +633,7 @@ module bus_hex()
 				cylinder(h=holder_height+2,d=opening_dia);
 			  
 			// Cell space    
-			//#translate([0,0,-holder_height])
-				//cylinder(h=2*(holder_height-slot_height),d=cell_dia);
-				cylinder(h=2 *(holder_height-slot_height-separation) ,d=cell_dia, center=true);
+			cylinder(h=2 *(holder_height-slot_height-separation) ,d=cell_dia, center=true);
 			
 			bus_width = (hex_pt + wall) - (opening_dia/2);    
 				
@@ -632,13 +653,7 @@ module bus_hex()
 			  
 			// Row slot B    
 			translate([0,-((opening_dia/2)+bus_width/2-wall),holder_height]) 
-				cube([(2*hex_w)+extra,bus_width,2*slot_height], center=true);              
-			
-			/*
-			translate([0,0,holder_height]) 
-				cube([hex_w+1,row_slot_width,2*slot_height], center=true);   
-				*/
-				
+				cube([(2*hex_w)+extra,bus_width,2*slot_height], center=true);
 		}
 	}	
 }
@@ -658,7 +673,7 @@ module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 					lid_support(lid_support_height,spacer,true);
 }
 
-// Mirrorcut is for mirrored supports that need a different offset due to wire and nonwire clearances
+// Mirrorcut is for mirrored supports that need a different offset due to wire and nonwire clearances differences
 module lid_support(lid_support_height = box_lid_height,spacer = 0, mirrorcut = false)
 {
 	// Ziptie supports
@@ -741,6 +756,7 @@ module pick_hole_style(lid = false)
 			both_ziptie_holes(ziptie_width, ziptie_thickness,[2:num_cols-1]);
 		}
 }
+
 module both_ziptie_holes(ziptie_width = ziptie_width,ziptie_thickness = ziptie_thickness,range = [1:num_cols])
 {
 	ziptie_holes(ziptie_width,ziptie_thickness,range);
@@ -853,9 +869,21 @@ function get_hex_length(num_cell)
 function get_hex_length_pt(num_cell)
 = (num_cell-1) * hex_pt*1.5;
 
-// returns a list of the hex cell centers of a given num of rows and columns.
+// returns a list of the hex cell centers of a given num of rows and columns for para packs.
+function get_hex_center_points_para(num_rows, num_cols)
+=  [
+		// Iterate through num of rows and cols
+		for(row = [0:num_rows-1],col = [0:num_cols-1]) 
+		[	// X component of list member
+			row*(0.5 * hex_w) + hex_w * col
+			,	
+			// Y component of list member
+			row * 1.5 * (hex_pt)
+		]
+	];	// Closing function bracket
+
+// returns a list of the hex cell centers of a given num of rows and columns for rect packs.
 function get_hex_center_points_rect(num_rows, num_cols)
-//= [[(num_rows == 1) ? 1 : 2,2],[2,4]]; // vector of points test 
 =  [
 	// Iterate through num of rows and cols
 	for(row = [0:num_rows-1],col = [0:num_cols-1]) 
