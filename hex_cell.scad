@@ -18,13 +18,16 @@
 // [x] add box_lip between box and lid
 //		[x] add box_lip parameter to rectcap negative to do it
 // [x] add side clearance
-// [x] fix wire hole for different box_wire_clearances
+// [x] fix wire hole for different box wire clearances
 // [x] fix wire_hole_length for large values
 // [x] add wire strain relief clamp
 // [x] add clamp to part_type
-// [] add abilty to remove faulty cells easily
+// [x] add abilty to remove faulty cells easily
 // [x] add default values in comments for config vars
 // [x] cleanup old code that uses hex()
+// [x] fix bus cuts with new hole style 
+// [x] work on strength of tab holders (make thicker)
+// [x] echo for length, height, and width of box
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32,21 +35,23 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-cell_dia = 18.6;    // Cell diameter default = 18.6 for 18650s
+cell_dia = 18.4;    // Cell diameter default = 18.4 for 18650s **PRINT OUT TEST FIT PIECE STL FIRST**
 cell_height = 65;	// Cell height default = 65 for 18650s
-wall = 0.8;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 0.8
+wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
 
 num_rows = 3;       
-num_cols = 4;
+num_cols = 5;
 
 holder_height = 15; // Total height of cell holder default = 15
 slot_height = 3.5;  // Height of all slots default = 3.5 mm is a good size for 14 awg solid in slots
-col_slot_width = 6; // Width of slots between rows default = 6
-row_slot_width = 6; // Width of slots along rows default = 6
+
+
+col_slot_width = 4; // Width of slots between rows default = 6
+row_slot_width = 8; // Width of slots along rows default = 6
 
 pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram
 
-wire_style = "strip";		// "strip" to make space to run nickel strips between cells.
+wire_style = "bus";		// "strip" to make space to run nickel strips between cells.
 						// "bus" to make space for bus wires between rows
 
 box_style = "both";		// "bolt" for bolting the box pack together
@@ -55,7 +60,7 @@ box_style = "both";		// "bolt" for bolting the box pack together
 
 part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "holder";   		// "holder" to generate cell holders, 
+part = "box lid";   		// "holder" to generate cell holders, 
 						// "cap" to generate pack end caps, 
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
@@ -65,19 +70,19 @@ part = "holder";   		// "holder" to generate cell holders,
 
 
 cap_wall = 1.2;				// Cap wall thickness (default = 1.2 recommend to make a multiple of nozzle dia)
-cap_clearance = 0.4;		// Clearance between holder and caps default = 0.4
+cap_clearance = 04;		// Clearance between holder and caps default = 0.2
 
 box_wall = 2.0;				// Box wall thickness (default = 2.0 recommend to make at least 4 * multiple of nozzle dia)
-box_clearance = 0.4;		// Clearance between holder and box default = 0.4
+box_clearance = 0.4;		// Clearance between holder and box default = 0.2
 
 
 // Box clearances for wires 
 bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
-box_bottom_clearance = 3;	// Vertical space for wires on bottom of box
+box_bottom_clearance = 0;	// Vertical space for wires on bottom of box
 box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
-box_nonwire_side_clearance = 3; // Horizontal space from left side (opposite of wire hole) to the box wall for wires
+box_nonwire_side_clearance = 0; // Horizontal space from left side (opposite of wire hole) to the box wall for wires
 
-wire_diameter = 5;			// Diameter of 1 power wire used in the strain relief clamps default = 5 for 10 awg stranded silicon wire
+wire_diameter = 2;			// Diameter of 1 power wire used in the strain relief clamps default = 5 for 10 awg stranded silicon wire
 wire_clamp_bolt_dia = 3;	// Bolt dia used for clamping wire default = 3 for M3 bolt
 clamp_factor = 0.7;			// Factor of wire diameter to be clamped. Higher number is less clamping force (default=0.7 max=1.0)
 bolt_dia = 3;				// Actual dia of bolt default = 3 for M3 bolt
@@ -92,13 +97,13 @@ ziptie_thickness = 2.5;
 //////////////////////////////////////////////////////////////////////////////////
 
 opening_dia = cell_dia;   		// Circular opening to expose cell default = 12
-separation = 1;   			// Separation between cell top and wire slots default = 1 
-wire_hole_width = 15;
-wire_hole_length = 10;		// default = 10
+separation = 1.5;   			// Separation between cell top and wire slots (aka tab thickness) default = 1.5
+wire_hole_width = 15;		
+wire_hole_length = 10;		// Length of the wireclamp that sticks out default = 10
 wire_top_wall = 4;			// Thickness of top wire wall default = 4mm
 clamp_plate_height = 4;		// default = 4
 bolt_dia_clearance = 1;		// Amount of extra diameter for bolt holes default = 1
-cell_tab_width = 3;			// Width of tab that keeps the cell in the holder
+cell_tab_width = 5;			// Width of tab that keeps the cell in the holder
 cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder
 
 
@@ -238,7 +243,6 @@ else	// if Normal
     if (part == "cap")  
 	{
         regular_cap();
-		mock_pack();
 	}
     
     else if (part == "holder")
@@ -262,14 +266,16 @@ else	// if Normal
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 // echos and info
 echo(pack_height_holder = get_mock_pack_height());
-echo(total_width_holder = get_hex_length_pt(num_rows)+hex_pt*2);
 echo(box_lid_height = box_lid_height);
 echo(box_bottom_height = box_bottom_height);
+echo(box_total_length = get_box_total_length());
+echo(box_total_width = get_box_total_width());
 
+echo(total_width_holder = get_hex_length_pt(num_rows)+hex_pt*2);
 if (pack_style == "rect")
 {
     // Rectangular style
-    echo(total_length_holder=hex_w*(num_cols+0.5));
+    echo(total_length_holder=get_holder_rect_length());
 	if((num_rows % 2) == 0) // Even?
 		
     echo("\n******************************************************* \n Top and bottom are different. Don't forget to do a mirrored holder\n*******************************************************");
@@ -591,7 +597,7 @@ module pick_hex()
         strip_hex();
 }
 
-// TODO: add cell tabs to allow for easy removal of cells
+
 module strip_hex()
 {
 	mirror([0,0,1])
@@ -626,19 +632,8 @@ module strip_hex()
 			translate([0,0,holder_height]) 
 				cube([hex_w+1,row_slot_width,2*slot_height], center=true);   
 		} 
-		// Tabs
-		for(a = [1,3,5])
-		{
-			intersection()
-			{
-				translate([ cell_radius*sin(a*60),cell_radius*cos(a*60),holder_height-(separation/2 + slot_height)])
-				rotate([0,0,a*30])cube([cell_tab_length * 2 + wall, cell_tab_width, separation],center=true);
-				hex(holder_height, hex_pt + hextra);
-			}
-			//]
+		cell_tabs();
 
-			
-		}  
 	}
 }
 
@@ -658,8 +653,7 @@ module bus_hex()
 			  
 			// Cell space    
 			cylinder(h=2 *(holder_height-slot_height-separation) ,d=cell_dia, center=true);
-			
-			bus_width = (hex_pt + wall) - (opening_dia/2);    
+		
 				
 			// 1st column slot
 			rotate([0,0,60])
@@ -672,14 +666,31 @@ module bus_hex()
 					cube([hex_w+1,col_slot_width,2*slot_height], center=true);
 					
 			// Row slot A
-			translate([0,(opening_dia/2)+bus_width/2-wall,holder_height]) 
-				cube([(2*hex_w)+extra,bus_width,2*slot_height], center=true);  
+			translate([0,(hex_pt*cos(60) + hex_pt)/2,holder_height]) 
+				cube([hex_w + extra,row_slot_width,2*slot_height], center=true);  
 			  
 			// Row slot B    
-			translate([0,-((opening_dia/2)+bus_width/2-wall),holder_height]) 
-				cube([(2*hex_w)+extra,bus_width,2*slot_height], center=true);
+			translate([0,-(hex_pt*cos(60) + hex_pt)/2,holder_height]) 
+				cube([hex_w + extra,row_slot_width,2*slot_height], center=true);
 		}
+		cell_tabs();
 	}	
+}
+module cell_tabs()
+{
+	// Tabs
+		for(a = [1,3,5])
+		{
+			intersection()
+			{
+				translate([ cell_radius*sin(a*60),cell_radius*cos(a*60),holder_height-(separation/2 + slot_height)])
+				rotate([0,0,a*30])cube([cell_tab_length * 2 + wall, cell_tab_width, separation],center=true);
+				hex(holder_height, hex_pt + hextra);
+			}
+			
+
+			
+		}  
 }
 // Generates support for the box for bolts and zipties. spacer parameter addes a spacer incase there is extra space on the boxes for wires.
 module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
@@ -697,7 +708,7 @@ module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 					lid_support(lid_support_height,spacer,true);
 }
 
-// Mirrorcut is for mirrored supports that need a different offset due to wire and nonwire clearances differences
+
 module lid_support(lid_support_height = box_lid_height,spacer = 0)
 {
 	// Ziptie supports
@@ -867,6 +878,27 @@ module hex(cap_height = holder_height,hex_pt = hex_pt)
 		linear_extrude(height=cap_height, convexity = 10)
 			polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);		
 }
+
+// returns total box width
+function get_box_total_width()
+= 2 * (box_clearance + box_wall) + get_holder_width();
+
+// returns holder width
+function get_holder_width()
+= get_hex_length_pt(num_rows) + hex_pt * 2;
+
+
+
+// returns length of the longest part of box (from side of lid to wireclamp) 
+// Reminder: Rect box only.
+function get_box_total_length()
+= 2 * (box_clearance + box_wall) + get_holder_rect_length() + box_wire_side_clearance + box_nonwire_side_clearance + wire_hole_length;
+
+// returns length of rect holders
+function get_holder_rect_length()
+= hex_w*(num_cols+0.5);
+
+ 
 
 // returns height of the mock pack
 function get_mock_pack_height() 
