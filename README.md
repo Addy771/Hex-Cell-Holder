@@ -18,6 +18,7 @@ This project was primarily created to make lithium ion packs out of 18650 for eb
 ## Holders
 You can generate a holder of any number of rows, columns, rectangular or parallelogram, and strip or bus. Below is an example configuration.
 The holders use small tabs to keep the cells in. If you happen to have a faulty cell in a completed pack, you can cut the tabs to remove the cell and easily replace it.
+Check the console for extra information like whether or not you need a mirrored holder or total widths or lengths.
 
     cell_dia = 18.4;    // Cell diameter default = 18.4 for 18650s **PRINT OUT TEST FIT PIECE STL FIRST**
     cell_height = 65;	// Cell height default = 65 for 18650s
