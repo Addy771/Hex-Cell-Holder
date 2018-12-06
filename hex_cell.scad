@@ -1,4 +1,4 @@
-// HEX CELL CAPS V1.5
+// HEX CELL HOLDER V1.5
 // https://github.com/Addy771/Hex-Cell-Holder
 // This script generates models of cell holders and caps for 
 // building battery packs using cylindrical cells. 
@@ -9,25 +9,6 @@
 // This file was created by Addy and is released as public domain
 // Contributors
 // Albert Phan - Added boxes and optimizations
-// 
-
-
-// TODO: 
-// [x] fix and optimize para cap
-// [x] fix lid support for bottom using bms clearance instead of box_bottom_clearance
-// [x] add box_lip between box and lid
-//		[x] add box_lip parameter to rectcap negative to do it
-// [x] add side clearance
-// [x] fix wire hole for different box wire clearances
-// [x] fix wire_hole_length for large values
-// [x] add wire strain relief clamp
-// [x] add clamp to part_type
-// [x] add abilty to remove faulty cells easily
-// [x] add default values in comments for config vars
-// [x] cleanup old code that uses hex()
-// [x] fix bus cuts with new hole style 
-// [x] work on strength of tab holders (make thicker)
-// [x] echo for length, height, and width of box
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,7 +21,7 @@ cell_height = 65;	// Cell height default = 65 for 18650s
 wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
 
 num_rows = 3;       
-num_cols = 5;
+num_cols = 6;
 
 holder_height = 15; // Total height of cell holder default = 15
 slot_height = 3.5;  // Height of all slots default = 3.5 mm is a good size for 14 awg solid in slots
@@ -60,7 +41,7 @@ box_style = "both";		// "bolt" for bolting the box pack together
 
 part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "box lid";   		// "holder" to generate cell holders, 
+part = "holder";   		// "holder" to generate cell holders, 
 						// "cap" to generate pack end caps, 
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
@@ -70,10 +51,10 @@ part = "box lid";   		// "holder" to generate cell holders,
 
 
 cap_wall = 1.2;				// Cap wall thickness (default = 1.2 recommend to make a multiple of nozzle dia)
-cap_clearance = 04;		// Clearance between holder and caps default = 0.2
+cap_clearance = 0.2;		// Clearance between holder and caps default = 0.2
 
 box_wall = 2.0;				// Box wall thickness (default = 2.0 recommend to make at least 4 * multiple of nozzle dia)
-box_clearance = 0.4;		// Clearance between holder and box default = 0.2
+box_clearance = 0.2;		// Clearance between holder and box default = 0.2
 
 
 // Box clearances for wires 
@@ -114,6 +95,25 @@ cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder
 
 // END OF CONFIGURATION
 ////////////////////////////////////////////////////////////////////////
+
+// TODO: 
+// [x] fix and optimize para cap
+// [x] fix lid support for bottom using bms clearance instead of box_bottom_clearance
+// [x] add box_lip between box and lid
+//		[x] add box_lip parameter to rectcap negative to do it
+// [x] add side clearance
+// [x] fix wire hole for different box wire clearances
+// [x] fix wire_hole_length for large values
+// [x] add wire strain relief clamp
+// [x] add clamp to part_type
+// [x] add abilty to remove faulty cells easily
+// [x] add default values in comments for config vars
+// [x] cleanup old code that uses hex()
+// [x] fix bus cuts with new hole style 
+// [x] work on strength of tab holders (make thicker)
+// [x] echo for length, height, and width of box
+
+
 $fn = 50;       // Number of facets for circular parts. 
 hextra = 0.0001; // enlarge hexes by this to make them overlap
 extra = 1;    	// for proper differences()
