@@ -1,9 +1,13 @@
 # Hex-Cell-Holder
-A parametric OpenSCAD project to generate STLs models of hexagonal lithium cell holders, boxes, and caps to be 3d printed. 
+A parametric OpenSCAD project to generate STLs models of hexagonal lithium cell holders, boxes, and caps to be 3d printed.
+
+
 ![Parametric](https://media.giphy.com/media/fBPInOvxaOiWQu1nSp/giphy.gif)
 ![EBike battery pieces](https://i.imgur.com/O8yBjoj.jpg)
 ![With Caps](https://i.imgur.com/ffPChFY.jpg)
+![Ebike Battery](https://i.imgur.com/I0l7Nm4.jpg)
 ![Box](https://i.imgur.com/kKj4PKd.jpg)
+
 
 ## How does it work?
 Hex-Cell-Holder uses OpenSCAD to create solid 3D CAD objects. Openscad allows easy parametric configuration of a 3d model which means you don't need to be a coder to create a specific model that you need.
