@@ -20,8 +20,8 @@ cell_dia = 18.4;    // Cell diameter default = 18.4 for 18650s **PRINT OUT TEST 
 cell_height = 65;	// Cell height default = 65 for 18650s
 wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
 
-num_rows = 3;       
-num_cols = 6;
+num_rows = 2;       
+num_cols = 5;
 
 holder_height = 15; // Total height of cell holder default = 15
 slot_height = 3.5;  // Height of all slots default = 3.5 mm is a good size for 14 awg solid in slots
@@ -41,7 +41,7 @@ box_style = "both";		// "bolt" for bolting the box pack together
 
 part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "holder";   		// "holder" to generate cell holders, 
+part = "box lid";   		// "holder" to generate cell holders, 
 						// "cap" to generate pack end caps, 
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
@@ -60,7 +60,7 @@ box_clearance = 0.2;		// Clearance between holder and box default = 0.2
 // Box clearances for wires 
 bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
 box_bottom_clearance = 0;	// Vertical space for wires on bottom of box
-box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
+box_wire_side_clearance = 0; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 0; // Horizontal space from left side (opposite of wire hole) to the box wall for wires
 
 wire_diameter = 2;			// Diameter of 1 power wire used in the strain relief clamps default = 5 for 10 awg stranded silicon wire
@@ -112,6 +112,9 @@ cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder
 // [x] fix bus cuts with new hole style 
 // [x] work on strength of tab holders (make thicker)
 // [x] echo for length, height, and width of box
+// [] Fix lid_support to generate different supports for bottom due to different wire and non wire side box clearances
+// [] Fix wire hole support generating too much over the box.
+// [] 
 
 
 $fn = 50;       // Number of facets for circular parts. 
@@ -695,54 +698,63 @@ module cell_tabs()
 // Generates support for the box for bolts and zipties. spacer parameter addes a spacer incase there is extra space on the boxes for wires.
 module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 {
-	lid_support(lid_support_height,spacer);
-
-	// if even, translate over half a hex
-	if(num_rows % 2 == 0)
-		translate([get_hex_length(num_cols +0.5),get_hex_length_pt(num_rows),0])
-			rotate([0,0,180])
-				lid_support(lid_support_height,spacer,true);
-	else	
-		translate([0,get_hex_length_pt(num_rows),0])
-			mirror([0,1,0])
-					lid_support(lid_support_height,spacer,true);
-}
-
-
-module lid_support(lid_support_height = box_lid_height,spacer = 0)
-{
-	// Ziptie supports
 	intersection()
 	{
-		for(col = [1:num_cols])
+		union()
 		{
-			// iterate on one side
-			// add support in the shape of a hex inbetween cols
-			difference()
-			{
-				union()
-				{
-					translate([get_hex_length(col+0.5),-get_hex_length_pt(2)-box_clearance,-(box_wall + box_clearance)])
-					hex(lid_support_height);
-					if(spacer)
-					{
-						translate([get_hex_length(col)+hex_w/2,-row_slot_width/2 -hex_pt/2,spacer/2])
-							cube([hex_w,hex_pt,spacer],center = true);
-					}
-					
-				}
-			
-				// Cutouts
-				translate([get_hex_length(col+0.5),-hex_pt*2 - (box_wall + box_clearance) + box_wall/2,-box_wall - lid_support_height/2 -extra])
-				{
-					cube([hex_pt*2 + extra,hex_pt*2,lid_support_height*5],center = true);
-				}
-			}
+				
+			// Generate +y side of supports
+			lid_support(lid_support_height,spacer);
 
+			// Generate -y side of supports
+			// if even, translate over half a hex
+			if(num_rows % 2 == 0)
+				translate([get_hex_length(num_cols + 0.5),get_hex_length_pt(num_rows),0])
+					rotate([0,0,180])
+						lid_support(lid_support_height,spacer);
+			else	
+				translate([0,get_hex_length_pt(num_rows),0])
+					mirror([0,1,0])
+							lid_support(lid_support_height,spacer);
 
 		}
 		// Remove all pieces outside of the box
 		rect_cap_positive(box_wall/2,box_clearance,lid_support_height + extra,box_wire_side_clearance,box_nonwire_side_clearance);
+	}
+	
+
+
+	
+}
+
+// Generates the support to hold the holders in the box lid and bottom.
+// spacer sets height for bms clearance
+// mirrored is used for the -y lid_support which will have different sizes due to different side clearances
+module lid_support(lid_support_height = box_lid_height,spacer = 0)
+{
+	for(col = [1:num_cols])
+	{
+		// iterate on one side
+		// add support in the shape of a hex inbetween cols
+		difference()
+		{
+			union()
+			{
+				translate([get_hex_length(col+0.5),-get_hex_length_pt(2)-box_clearance,-(box_wall + box_clearance)])
+				hex(lid_support_height);
+				if(spacer)
+				{
+					translate([get_hex_length(col)+hex_w/2,-row_slot_width/2 -hex_pt/2,spacer/2])
+						cube([hex_w/2,hex_pt,spacer],center = true);
+				}
+				
+			}
+			// Cutouts
+			translate([get_hex_length(col+0.5),-hex_pt*2 - (box_wall + box_clearance) + box_wall/2,-box_wall - lid_support_height/2 -extra])
+			{
+				cube([hex_pt*2 + extra,hex_pt*2,lid_support_height*5],center = true);
+			}
+		}
 	}
 }
 
