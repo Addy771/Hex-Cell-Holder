@@ -21,7 +21,7 @@ cell_height = 65;	// Cell height default = 65 for 18650s
 wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
 
 num_rows = 2;       
-num_cols = 4;
+num_cols = 2;
 
 holder_height = 15; // Total height of cell holder default = 15
 slot_height = 3.5;  // Height of all slots default = 3.5 mm is a good size for 14 awg solid in slots
@@ -112,9 +112,11 @@ cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder
 // [x] fix bus cuts with new hole style 
 // [x] work on strength of tab holders (make thicker)
 // [x] echo for length, height, and width of box
-// [x] Fix lid_support to generate different supports for bottom due to different wire and non wire side box clearances
-// [] Fix wire hole support generating too much over the box.
-// [] Change instances of box_clearance used in the x direction to box_clearance_x because box_clearance is only true in the y direction, for box_clearance in x, you must use the x component of box_clearance ( * cos(30))
+// [x] #5 Fix lid_support issues with even rows
+// [x] #3 Fix wire hole support generating too much over the box.
+// [x] Change instances of box_clearance used in the x direction to box_clearance_x because box_clearance is only true in the y direction, for box_clearance in x, you must use the x component of box_clearance ( * cos(30))
+// [x] #4 Fix zipties and bolt holes generate in same hole for cols 2 or less
+// [] #6 Fix box_clearance value changes lip height
 
 
 $fn = 50;       // Number of facets for circular parts. 
@@ -802,7 +804,10 @@ module pick_hole_style(lid = false)
 			else
 				both_bolt_holes(bolt_dia * 0.9,bolt_dia * 0.9,[1,num_cols]);
 
-			both_ziptie_holes(ziptie_width, ziptie_thickness,[2:num_cols-1]);
+			// Don't generate ziptie holes for both style when 2 columns or less
+			if(num_cols > 2)
+				both_ziptie_holes(ziptie_width, ziptie_thickness,[2:num_cols-1]);
+			
 		}
 }
 
