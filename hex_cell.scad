@@ -21,7 +21,7 @@ cell_height = 65;	// Cell height default = 65 for 18650s
 wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
 
 num_rows = 2;       
-num_cols = 5;
+num_cols = 4;
 
 holder_height = 15; // Total height of cell holder default = 15
 slot_height = 3.5;  // Height of all slots default = 3.5 mm is a good size for 14 awg solid in slots
@@ -60,7 +60,7 @@ box_clearance = 0.2;		// Clearance between holder and box default = 0.2
 // Box clearances for wires 
 bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
 box_bottom_clearance = 0;	// Vertical space for wires on bottom of box
-box_wire_side_clearance = 0; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
+box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 0; // Horizontal space from left side (opposite of wire hole) to the box wall for wires
 
 wire_diameter = 2;			// Diameter of 1 power wire used in the strain relief clamps default = 5 for 10 awg stranded silicon wire
@@ -112,9 +112,9 @@ cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder
 // [x] fix bus cuts with new hole style 
 // [x] work on strength of tab holders (make thicker)
 // [x] echo for length, height, and width of box
-// [] Fix lid_support to generate different supports for bottom due to different wire and non wire side box clearances
+// [x] Fix lid_support to generate different supports for bottom due to different wire and non wire side box clearances
 // [] Fix wire hole support generating too much over the box.
-// [] 
+// [] Change instances of box_clearance used in the x direction to box_clearance_x because box_clearance is only true in the y direction, for box_clearance in x, you must use the x component of box_clearance ( * cos(30))
 
 
 $fn = 50;       // Number of facets for circular parts. 
@@ -124,9 +124,11 @@ spacing = 4;    // Spacing between top and bottom pieces
 box_lid_height = (holder_height)-(holder_height-slot_height)/2+(box_clearance+box_wall) + bms_clearance;	// box lid to middle of holder
 box_bottom_height = get_mock_pack_height() + 2 * (box_wall + box_clearance) + bms_clearance + box_bottom_clearance - box_lid_height;
 box_lip = box_wall/2;
-hex_w = cell_dia + 2*wall;		// Width of one hex cell
+hex_w = (cell_dia + 2*wall);		// Width of one hex cell
 hex_pt = (hex_w/2) / cos(30); 	// Half the distance of point to point of a hex aka radius
 cell_radius = cell_dia/2;
+box_clearance_x = box_clearance * cos(30);	// Used whenever we are translating in the x direction from the hexes
+box_wall_x = box_wall * cos(30);			// Used whenever we are translating in the x direction from the hexes 
 
 
 wire_clamp_support = hex_pt + box_clearance + box_wall - wire_hole_width/2 ;		// Place for strain relief clamp to screw into
@@ -450,16 +452,30 @@ module regular_box_lid()
 						translate([0,0,box_lid_height-(box_wall/2) -extra])
 						rect_cap_positive(box_wall/2,box_clearance,box_wall + extra - box_clearance,box_wire_side_clearance,box_nonwire_side_clearance);
 						// Wire support hole
-						translate([(num_cols)*hex_w + box_clearance + box_wire_side_clearance + box_wall - wire_hole_length*8/2,0,box_lid_height-box_wall-box_clearance - (box_lid_height)/2])
-							cube([wire_hole_length*10,wire_hole_width + 2* (wire_clamp_support),box_lid_height], center = true);
-							
+
+						// TODO: OLD DELETE
+						// translate([(num_cols)*hex_w + box_clearance + box_wire_side_clearance + box_wall - wire_hole_length*8/2,0,box_lid_height-box_wall-box_clearance - (box_lid_height)/2])
+						// 	cube([wire_hole_length*10,wire_hole_width + 2* (wire_clamp_support),box_lid_height], center = true);
+
+						translate([(num_cols * hex_w + box_wire_side_clearance + box_clearance_x + box_wall_x) - (box_wall_x + box_clearance_x + hex_w/2 + extra),-(wire_hole_width + 2 * (wire_clamp_support)) /2,-(box_wall + box_clearance)])
+							cube([wire_hole_length + box_wall_x + box_clearance_x + hex_w/2 + extra,wire_hole_width + 2 * (wire_clamp_support),box_lid_height]);
+					
+						// TODO: Delete - testing purpoises
+						// translate([0,0,-(box_clearance + box_wall)+9])
+						// 	// cube([wire_hole_length,wire_hole_width + 2 * (wire_clamp_support),box_lid_height]);
+						// 		hex(50,hex_pt + box_clearance);
+						// translate([-(hex_pt * sin(2 * 60) + box_clearance),0,0])
+						// 		cube([20,60,50])
+						// 	// sanity check
+						// echo(hex_w = hex_w/2 + box_clearance);
+						// echo(hex_pt_w = hex_pt * sin(2*60) + box_clearance);
 						
 					}
 					// Negatives
 					rect_cap_negative(box_wall,box_clearance,box_lid_height*2,box_wire_side_clearance,box_nonwire_side_clearance);
 					// Wire hole cutout
 					translate([(num_cols)*hex_w+box_clearance+box_wall+box_wire_side_clearance,0,wire_top_wall - box_wall + box_lid_height/2])
-						cube([wire_hole_length *11 + box_wall *3,wire_hole_width,box_lid_height], center = true);
+						cube([(wire_hole_length + box_wall_x + box_clearance_x + hex_w/2) * 2 + box_wall *3,wire_hole_width,box_lid_height], center = true);
 					// Strain relief bolt cutouts
 					translate([(num_cols)*hex_w+box_clearance+box_wall + box_wire_side_clearance + wire_hole_length/2,(wire_hole_width + wire_clamp_support)/2,0])
 						cylinder(d = wire_clamp_bolt_dia * 0.9, h=wire_top_wall + box_lid_height);
@@ -888,7 +904,8 @@ module wire_clamp()
 module hex(cap_height = holder_height,hex_pt = hex_pt)
 {
 		linear_extrude(height=cap_height, convexity = 10)
-			polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);		
+			polygon([ for (a=[0:5])[hex_pt*sin(a*60),hex_pt*cos(a*60)]]);	
+
 }
 
 // returns total box width
