@@ -1,4 +1,3 @@
-// HEX CELL HOLDER V1.5
 // https://github.com/Addy771/Hex-Cell-Holder
 // This script generates models of cell holders and caps for 
 // building battery packs using cylindrical cells. 
@@ -61,7 +60,7 @@ box_clearance = 0.2;		// Clearance between holder and box default = 0.2
 // Box clearances for wires 
 bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
 box_bottom_clearance = 0;	// Vertical space for wires on bottom of box
-box_wire_side_clearance = 0; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
+box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 0; // Horizontal space from left side (opposite of wire hole) to the box wall for wires
 
 wire_diameter = 2;			// Diameter of 1 power wire used in the strain relief clamps default = 5 for 10 awg stranded silicon wire
@@ -118,8 +117,8 @@ box_lip_height = box_wall * 0.75;	// Height of lip default = box_wall * 0.75
 // [x] #3 Fix wire hole support generating too much over the box.
 // [x] Change instances of box_clearance used in the x direction to box_clearance_x because box_clearance is only true in the y direction, for box_clearance in x, you must use the x component of box_clearance ( * cos(30))
 // [x] #4 Fix zipties and bolt holes generate in same hole for cols 2 or less
-// [] #6 Fix box_clearance value changes lip height
-// [] Add option to have no lip for box for printing with thin box walls
+// [x] #6 Fix box_clearance value changes lip height
+// [x] Add option to have no lip for box for printing with thin box walls
 
 ///////////////////////////////////////////////////////////////////////////
 // NON-Configurable helper variables
