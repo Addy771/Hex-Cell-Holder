@@ -31,7 +31,7 @@ row_slot_width = 8; // Width of slots along rows default = 6
 
 pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram
 
-wire_style = "bus";		// "strip" to make space to run nickel strips between cells.
+wire_style = "strip";		// "strip" to make space to run nickel strips between cells.
 						// "bus" to make space for bus wires between rows
 
 box_style = "both";		// "bolt" for bolting the box pack together
@@ -40,7 +40,7 @@ box_style = "both";		// "bolt" for bolting the box pack together
 
 part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "box lid";   		// "holder" to generate cell holders, 
+part = "holder";   		// "holder" to generate cell holders, 
 						// "cap" to generate pack end caps, 
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
@@ -700,18 +700,55 @@ module bus_hex()
 module cell_tabs()
 {
 	// Tabs
-		for(a = [1,3,5])
+		if(wire_style == "strip")
 		{
-			intersection()
+			for(a = [1,3,5])
 			{
-				translate([ cell_radius*sin(a*60),cell_radius*cos(a*60),holder_height-(separation/2 + slot_height)])
-				rotate([0,0,a*30])cube([cell_tab_length * 2 + wall, cell_tab_width, separation],center=true);
-				hex(holder_height, hex_pt + hextra);
-			}
-			
+				difference()
+				{
+					intersection()
+					{
+						translate([ cell_radius*sin(a*60),cell_radius*cos(a*60),holder_height-(separation/2 + slot_height)])
+						rotate([0,0,a*30])cube([cell_tab_length * 2 + wall, cell_tab_width, separation],center=true);
+						hex(holder_height, hex_pt + hextra);
+					}
+					
+					// Difference with strip cutouts
+					union()
+					{
+						// 1st column slot
+						rotate([0,0,60])
+							translate([0,0,holder_height/2])    
+								cube([hex_w+1,col_slot_width,holder_height*2], center=true);    
+							
+						// 2nd column slot
+						rotate([0,0,-60])
+							translate([0,0,holder_height/2])    
+								cube([hex_w+1,col_slot_width,holder_height*2], center=true);
+					   
+						// Row slot 
+						translate([0,0,holder_height/2]) 
+							cube([hex_w+1,row_slot_width,holder_height*2], center=true);   
+					}
+					
 
-			
-		}  
+				}
+			}
+		}
+		else if(wire_style == "bus")
+		{
+			for(a = [1,3])
+			{
+
+					intersection()
+					{
+						translate([cell_radius*sin(a*90),cell_radius*cos(a*90),holder_height-(separation/2 + slot_height)])
+						rotate([0,0,a*180])cube([cell_tab_length * 2 + wall, cell_tab_width, separation],center=true);
+						hex(holder_height, hex_pt + hextra);
+					}
+
+			}
+		}
 }
 // Generates support for the box for bolts and zipties. spacer parameter addes a spacer incase there is extra space on the boxes for wires.
 module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
