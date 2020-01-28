@@ -19,7 +19,7 @@ cell_dia = 18.4;    // Cell diameter default = 18.4 for 18650s **PRINT OUT TEST 
 cell_height = 65;	// Cell height default = 65 for 18650s
 wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
 
-num_rows = 2;       
+num_rows = 3;       
 num_cols = 3;
 
 holder_height = 15; // Total height of cell holder default = 15
@@ -29,7 +29,7 @@ slot_height = 3.5;  // Height of all slots default = 3.5 mm is a good size for 1
 col_slot_width = 4; // Width of slots between rows default = 6
 row_slot_width = 8; // Width of slots along rows default = 6
 
-pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram, "tria" for triangle shaped pack (number of rows define the amount of rows at the bottom of the triangle. Columns get ignored)
+pack_style = "tria";	// "rect" for rectangular pack, "para" for parallelogram, "tria" for triangle shaped pack (number of rows define the amount of rows at the bottom of the triangle. Columns get ignored)
 
 wire_style = "strip";		// "strip" to make space to run nickel strips between cells.
 						// "bus" to make space for bus wires between rows
@@ -298,7 +298,7 @@ else if(pack_style == "para")
 else if(pack_style == "tria")
 {
 	// Triangle style
-    echo(total_length_holder=hex_w*(num_cols+0.5*(num_rows-1))); // No idea if this is correct
+    echo(total_length_holder=hex_w*(num_rows-1));
 	echo("\n******************************************************* \n Top and bottom are not different. But don't forget to print twice ;)\n*******************************************************");
 }
 
