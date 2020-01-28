@@ -29,7 +29,7 @@ slot_height = 3.5;  // Height of all slots default = 3.5 mm is a good size for 1
 col_slot_width = 4; // Width of slots between rows default = 6
 row_slot_width = 8; // Width of slots along rows default = 6
 
-pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram
+pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram, "tria" for triangle shaped pack (number of rows define the amount of rows at the bottom of the triangle. Columns get ignored)
 
 wire_style = "strip";		// "strip" to make space to run nickel strips between cells.
 						// "bus" to make space for bus wires between rows
@@ -295,6 +295,12 @@ else if(pack_style == "para")
     echo(total_length_holder=hex_w*(num_cols+0.5*(num_rows-1)));
 	echo("\n******************************************************* \n Top and bottom are different. Don't forget to do a mirrored holder\n*******************************************************");
 }
+else if(pack_style == "tria")
+{
+	// Triangle style
+    echo(total_length_holder=hex_w*(num_cols+0.5*(num_rows-1))); // No idea if this is correct
+	echo("\n******************************************************* \n Top and bottom are not different. But don't forget to print twice ;)\n*******************************************************");
+}
 
 if (part_type == "mirrored" && (part == "box lid" || part == "box bottom"))
 	echo("\n******************************************************* \n Please choose Normal for box lid or box bottom as there aren't mirrored versions of them.\n*******************************************************");
@@ -302,6 +308,8 @@ if (part_type == "mirrored" && (part == "box lid" || part == "box bottom"))
 if (pack_style == "para" && (part == "box lid" || part == "box bottom"))
 	echo("\n******************************************************* \n There are currently no boxes for parallelogram style\n*******************************************************");
 
+if (pack_style == "tria" && (part == "box lid" || part == "box bottom" || part == "cap"))
+	echo("\n******************************************************* \n There are currently no boxes and caps for triangle style\n*******************************************************");
 
 
 
@@ -437,7 +445,6 @@ module regular_cap()
 
 module regular_box_lid()
 {
-	
 	if (pack_style == "rect")
 	{
 		difference()
@@ -599,8 +606,16 @@ module regular_pack()
 						translate([hex_w*col,0,0])
 							pick_hex();
 					}
-
-				}
+				} 
+                else if (pack_style == "tria") 
+                {
+                    translate([row*(0.5 * hex_w),1.5*(hex_pt)*row,0])
+					for(col = [0:row])
+					{
+						translate([hex_w*(-col),0,0])
+							pick_hex();
+					}
+                }
 			}
 		}      
 }
