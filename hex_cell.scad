@@ -32,6 +32,7 @@ row_slot_width = 10.5; // Width of slots along rows default = 6
 cell_top_overlap = 3; // How big the opening overlaps the cell default = 3
 
 pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram, "tria" for triangle shaped pack (number of rows define the amount of rows at the bottom of the triangle. Columns get ignored)
+pack_style = "tria";	// "rect" for rectangular pack, "para" for parallelogram, "tria" for triangle shaped pack (number of rows define the amount of rows at the bottom of the triangle. Columns get ignored)
 
 wire_style = "strip";		// "strip" to make space to run nickel strips between cells.
 						// "bus" to make space for bus wires between rows
@@ -806,7 +807,6 @@ module cell_tabs()
 						rotate([0,0,a*30])cube([cell_tab_length * 2 + wall, cell_tab_width, separation],center=true);
 						hex(holder_height, hex_pt + hextra);
 					}
-
 					// Difference with strip cutouts
 					union()
 					{
@@ -909,6 +909,7 @@ module stacking_pins(row = 0,col = 0,cut = false)
 					translate([hex_pt*sin(a),hex_pt*cos(a),-(holder_height+extra)])
 						cylinder(d = stacking_pin_dia * stacking_pins_tolerance, h = pin_height + extra);
 				}
+				
 			}
 			else if(row % 2 == 0 && row == num_rows-1 && col == 0 )
 			{
@@ -992,8 +993,6 @@ module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 							lid_support(lid_support_height,spacer);
 
 		}
-		// Remove all pieces outside of the box
-		rect_cap_positive(box_wall/2,box_clearance,lid_support_height + extra,box_wire_side_clearance,box_nonwire_side_clearance);
 	}
 
 
@@ -1063,7 +1062,6 @@ module pick_hole_style(lid = false)
 			// Don't generate ziptie holes for both style when 2 columns or less
 			if(num_cols > 2)
 				both_ziptie_holes(ziptie_width, ziptie_thickness,[2:num_cols-1]);
-
 		}
 }
 
