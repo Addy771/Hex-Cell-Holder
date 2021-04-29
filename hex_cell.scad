@@ -20,14 +20,14 @@ cell_height = 65;	// Cell height default = 65 for 18650s
 wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
 
 num_rows = 3;
-num_cols = 2;
+num_cols = 3;
 
 holder_height = 10; // Total height of cell holder default = 15
 slot_height = 3;  // Height of all slots default = 3 mm
 
 
-col_slot_width = 10; // Width of slots between rows default = 8
-row_slot_width = 10; // Width of slots along rows default = 8
+col_slot_width = 10.5; // Width of slots between rows default = 8
+row_slot_width = 10.5; // Width of slots along rows default = 8
 
 cell_top_overlap = 3; // How big the opening overlaps the cell default = 3
 
@@ -42,12 +42,13 @@ box_style = "both";		// "bolt" for bolting the box pack together
 
 part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "insulator";   		// "holder" to generate cell holders,
+part = "vertical box section";   		// "holder" to generate cell holders,
 						// "cap" to generate pack end caps,
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
 						// "wire clamp" for strain relief clamp
-						// "insulator" for insulator piece to fit over the nickel strips 
+						// "insulator" for insulator piece to fit over the nickel strips
+						// "vertical box section" for vertical battery stacking boxes (print 1 section for every additional stacked pack)
 
 						// Note: There are no boxes for parallelogram packs.
 
@@ -58,7 +59,7 @@ box_lip = true;			// Adds a lip to the box pieces. default = true.
 cap_wall = 1.2;				// Cap wall thickness (default = 1.2 recommend to make a multiple of nozzle dia)
 cap_clearance = 0.2;		// Clearance between holder and caps default = 0.2
 
-box_wall = 2.0;				// Box wall thickness (default = 2.0 recommend to make at least 4 * multiple of nozzle dia)
+box_wall = 2;				// Box wall thickness (default = 2.0 recommend to make at least 4 * multiple of nozzle dia)
 box_clearance = 0.2;		// Clearance between holder and box default = 0.2
 
 
@@ -78,16 +79,22 @@ ziptie_width = 8;
 ziptie_thickness = 2.5;
 
 ////////////////////////////////////////////////////////////////////////////////////
-// Experimental Vertical Holder Stacking 
+// EXPERIMENTAL Vertical Holder Stacking
+// Use at own risk - Stacking holders vertically requires more thought into electrical short prevention.
 // Rectangular packs only
+// Using stacking pins or bolts require you to cut holes out for the fishpaper for the insulation.
+// If you don't use stacking pins or bolts, you can print out insulators (use part = insulator) and add fishpaper without cutting holes in it on top.
+// The fishpaper is a last line of protection to prevent shorts in case the plastic insulation melts due to a malfunction.
 ///////////////////////////////////////////////////////////////////////////////////
 
 stacking_pins = false;	// Adds pins and holes for stacking holders vertically. Make sure col and row slots are the same width. You'll have to think about how to insulate the strips properly. Maybe precut fishpaper? 
 stacking_pin_dia = 3;	// Default 3 mm. Smaller than 3 not recommended.
 stacking_pin_alt_style = true; // Alternate style of pins that are longer and go into the holder deeper. (Used when the triangle islands are too small for a hole)
-stacking_bolts = true;	// Adds holes through the holders to bolt them. !!!!!!MAKE SURE BOLTS DO NOT SHORT NICKEL STRIPS!!!!
+stacking_bolts = false;	// Adds holes through the holders to bolt them (if not using box to bolt them together). 
+						// !!!!!!MAKE SURE BOLTS DO NOT SHORT NICKEL STRIPS!!!!
 						// Don't use with stacking pins. You'll need mirrored pieces.
 stacking_bolt_dia = 4.5;	// Bolt dia. Make slightly bigger for bolt fit. Watch out for too large bolts that cut too much out of the holder.
+num_pack_stacks = 4;	// How many packs you will stack vertically. Affects part = vertical box section. 
 
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -118,28 +125,18 @@ insulator_thickness = (slot_height-0.5);	// Thickness of insulator default slot_
 ////////////////////////////////////////////////////////////////////////
 
 // TODO:
-// [x] fix and optimize para cap
-// [x] fix lid support for bottom using bms clearance instead of box_bottom_clearance
-// [x] add box_lip_height between box and lid
-//		[x] add box_lip_height parameter to rectcap negative to do it
-// [x] add side clearance
-// [x] fix wire hole for different box wire clearances
-// [x] fix wire_hole_length for large values
-// [x] add wire strain relief clamp
-// [x] add clamp to part_type
-// [x] add abilty to remove faulty cells easily
-// [x] add default values in comments for config vars
-// [x] cleanup old code that uses hex()
-// [x] fix bus cuts with new hole style
-// [x] work on strength of tab holders (make thicker)
-// [x] echo for length, height, and width of box
-// [x] #5 Fix lid_support issues with even rows
-// [x] #3 Fix wire hole support generating too much over the box.
-// [x] Change instances of box_clearance used in the x direction to box_clearance_x because box_clearance is only true in the y direction, for box_clearance in x, you must use the x component of box_clearance ( * cos(30))
-// [x] #4 Fix zipties and bolt holes generate in same hole for cols 2 or less
-// [x] #6 Fix box_clearance value changes lip height
-// [x] Add option to have no lip for box for printing with thin box walls
-// [] Change tabs to be more friendly with larger nickel strip. Use opening then cut out what you want.
+// [x] Vertical Stacking Pins
+// [x] Vertical Stacking Bolts
+// [] Add insulators
+//	[x] rect support
+//	[] other styles support
+// [x] Fixed boxes spacers
+// [] Add vertical stacking boxes
+// [] Add insulator to bat file
+// [] Add some more echo helper messages
+// [] When using vertical stacking boxes, bolt holes should be changed to bolt size instead of tap size.
+// [] Double check box_lip_height usage versus box_wall/2 in some cases with the lid and bottom lips
+
 
 ///////////////////////////////////////////////////////////////////////////
 // NON-Configurable helper variables
@@ -150,6 +147,7 @@ extra = 1;    	// for proper differences()
 spacing = 4;    // Spacing between top and bottom pieces
 box_lid_height = (holder_height)-(holder_height-slot_height)/2+(box_clearance+box_wall) + bms_clearance;	// box lid to middle of holder
 box_bottom_height = get_mock_pack_height() + 2 * (box_wall + box_clearance) + bms_clearance + box_bottom_clearance - box_lid_height;
+vertical_box_section_height = get_mock_pack_height();
 hex_w = (cell_dia + 2*wall);		// Width of one hex cell
 hex_pt = (hex_w/2) / cos(30); 	// Half the distance of point to point of a hex aka radius
 cell_radius = cell_dia/2;
@@ -223,24 +221,32 @@ wire_clamp_nib_dia = 5;
 	}
 	else if(part_type == "assembled")
 	{
-
-		mock_pack();	// for debugging for now
-		translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
-			mirror([0,0,1])
+		// TESTING difference section analysis
+		difference()
+		{
+			union()
 			{
-				color("green", alpha = 0.7)
-				regular_box_lid();
-				color("orange", alpha = 0.7)
-						translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
-							mirror([0,0,1])
-								wire_clamp();
+				mock_pack();	// for debugging for now
+				translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
+					mirror([0,0,1])
+					{
+						color("green", alpha = 0.7)
+						regular_box_lid();
+						color("orange", alpha = 0.7)
+								translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
+									mirror([0,0,1])
+										wire_clamp();
+					}
+
+
+				color("lightgreen", alpha = 0.7)
+					translate([0,0,-box_bottom_clearance])
+						regular_box_bottom();
 			}
-
-
-			color("lightgreen", alpha = 0.7)
-				translate([0,0,-box_bottom_clearance])
-					regular_box_bottom();
-
+			// testing cutout
+			translate([0,50,50])
+				cube([100,20,150], center = true);
+		}
 		translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*2,get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance),0])
 		{
 			mock_pack();	// for debugging for now  - 2 * (box_wall + box_clearance) - bms_clearance
@@ -302,6 +308,10 @@ wire_clamp_nib_dia = 5;
 		{
 			strip_insulator();
 		}
+		else if(part == "vertical box section")
+		{
+			vertical_box_section(num_pack_stacks-1);
+		}
 
 }
 
@@ -315,6 +325,7 @@ echo(box_lid_height = box_lid_height);
 echo(box_bottom_height = box_bottom_height);
 echo(box_total_length = get_box_total_length());
 echo(box_total_width = get_box_total_width());
+echo(vertical_box_section_height = vertical_box_section_height * (num_pack_stacks-1) + box_lip_height);
 
 echo(total_width_holder = get_hex_length_pt(num_rows)+hex_pt*2);
 if (pack_style == "rect")
@@ -499,7 +510,7 @@ module regular_box_lid()
 						// Lip Positive ( lip is added to box_lid and subtracted from box_bottom)
 						if(box_lip)
 						{
-							translate([0,0,box_lid_height - box_wall/2])
+							translate([0,0,box_lid_height -box_wall/2])
 								rect_cap_positive(box_wall/2,box_clearance,box_lip_height,box_wire_side_clearance,box_nonwire_side_clearance);
 						}
 
@@ -525,8 +536,6 @@ module regular_box_lid()
 					both_lid_supports(box_lid_height + box_lip_height, bms_clearance);
 				else
 					both_lid_supports(box_lid_height, bms_clearance);
-
-
 			}
 			// Other cutouts of entire box lid
 			pick_hole_style(lid = true);
@@ -944,6 +953,46 @@ module strip_insulator()
 
 }
 
+// Generates a box section designed for one addition vertical pack stack. Can make sections larger if printer is able to print higher
+module vertical_box_section(num_stacks = 1)
+{
+	// Create a box section with lips (if enabled) on both sides
+	if(pack_style == "rect")
+	{
+		difference()
+		{
+			union()
+			{
+				
+				// main box 
+				difference()
+				{
+					translate([0,0,box_wall+box_clearance])
+						rect_cap_positive(box_wall,box_clearance,vertical_box_section_height*num_stacks,box_wire_side_clearance,box_nonwire_side_clearance);
+					// hollow out
+					translate([0,0,-extra])
+						rect_cap_negative(box_wall,box_clearance,vertical_box_section_height*num_stacks*2,box_wire_side_clearance,box_nonwire_side_clearance);
+				}
+				translate([0,0,box_wall+box_clearance-box_lip_height])
+					both_lid_supports(vertical_box_section_height*num_stacks+box_lip_height,0);
+				
+
+				//%cylinder(d=50,h = vertical_box_section_height*num_stacks); // helper cylinder
+			}
+
+			// Other cutouts of entire box bottom
+			// Lip cutout
+			if(box_lip)
+			{	
+				// top lip cut
+				translate([0,0,vertical_box_section_height*num_stacks-box_lip_height])
+					rect_cap_negative(box_wall,box_clearance + box_wall/2,box_lid_height,box_wire_side_clearance,box_nonwire_side_clearance);
+			}
+			pick_hole_style();
+		}
+	}
+}
+
 // Generates support for the box for bolts and zipties. spacer parameter addes a spacer incase there is extra space on the boxes for wires.
 module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 {
@@ -965,8 +1014,9 @@ module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 				translate([0,get_hex_length_pt(num_rows),0])
 					mirror([0,1,0])
 							lid_support(lid_support_height,spacer);
-
 		}
+		translate([0,0,-(box_wall/2 + extra)])
+			rect_cap_positive(box_wall/2,box_clearance,lid_support_height*2 ,box_wire_side_clearance,box_nonwire_side_clearance);
 	}
 
 
@@ -983,25 +1033,17 @@ module lid_support(lid_support_height = box_lid_height,spacer = 0)
 	{
 		// iterate on one side
 		// add support in the shape of a hex inbetween cols
-		difference()
-		{
-			union()
-			{
-				translate([get_hex_length(col+0.5),-get_hex_length_pt(2)-box_clearance,-(box_wall + box_clearance)])
-				hex(lid_support_height);
-				if(spacer)
+				union()
 				{
-					translate([get_hex_length(col)+hex_w/2,-row_slot_width/2 -hex_pt/2,spacer/2])
-						cube([hex_w/2,hex_pt,spacer],center = true);
-				}
+					translate([get_hex_length(col+0.5),-get_hex_length_pt(2)-box_clearance,-(box_wall + box_clearance)])
+					hex(lid_support_height);
+					if(spacer)
+					{
+						translate([get_hex_length(col)+hex_w/2,-row_slot_width/2 -hex_pt/2,spacer/2])
+							cube([hex_w/2,hex_pt,spacer],center = true);
+					}
 
-			}
-			// Cutouts
-			translate([get_hex_length(col+0.5),-hex_pt*2 - (box_wall + box_clearance) + box_wall/2,-box_wall - lid_support_height/2 -extra])
-			{
-				cube([hex_pt*2 + extra,hex_pt*2,lid_support_height*5],center = true);
-			}
-		}
+				}
 	}
 }
 
@@ -1062,7 +1104,7 @@ module ziptie_holes(ziptie_width = ziptie_width,ziptie_thickness = ziptie_thickn
 			// Cutout ziptie holes
 			translate([-hex_w/2 + col * hex_w,-hex_pt + 0.5 *(box_wall + box_clearance),box_bottom_height/2-box_wall-box_clearance])
 			{
-				cube([ziptie_width,ziptie_thickness,box_bottom_height*2],center = true);
+				cube([ziptie_width,ziptie_thickness,box_bottom_height*100],center = true);
 			// Cutout for ziptie head (cuts through lid however, should think of a better solution maybe bolts instead?)
 			// translate([0,ziptie_head_thickness/2-ziptie_thickness/2,-(box_lid_height/2-box_wall-box_clearance)- (box_wall + box_clearance) + ziptie_head_length/2 - extra/2])
 			// 	cube([ziptie_head_width,ziptie_head_thickness,ziptie_head_length + extra],center = true);
@@ -1091,7 +1133,7 @@ module bolt_holes(bolt_dia,bolt_head_dia, range = [1:num_cols])
 			// Cutout bolt holes
 			translate([-hex_w/2 + col * hex_w,-hex_pt + 0.5 *(box_wall + box_clearance),box_lid_height/2-box_wall-box_clearance])
 			{
-				cylinder(d = bolt_dia, h = box_bottom_height*2,center = true);
+				cylinder(d = bolt_dia, h = box_bottom_height*100,center = true);
 			translate([0,0,-(box_lid_height/2-box_wall-box_clearance)- (box_wall + box_clearance) - extra])
 				cylinder(d = bolt_head_dia, h = bolt_head_thickness + extra);
 			}
