@@ -17,17 +17,17 @@
 
 cell_dia = 18.4;    // Cell diameter default = 18.4 for 18650s **PRINT OUT TEST FIT PIECE STL FIRST**
 cell_height = 65;	// Cell height default = 65 for 18650s
-wall = 2.0;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
+wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
 
 num_rows = 3;
-num_cols = 5;
+num_cols = 2;
 
-holder_height = 15; // Total height of cell holder default = 15
+holder_height = 10; // Total height of cell holder default = 15
 slot_height = 3;  // Height of all slots default = 3 mm
 
 
-col_slot_width = 9; // Width of slots between rows default = 8
-row_slot_width = 9; // Width of slots along rows default = 8
+col_slot_width = 10; // Width of slots between rows default = 8
+row_slot_width = 10; // Width of slots along rows default = 8
 
 cell_top_overlap = 3; // How big the opening overlaps the cell default = 3
 
@@ -42,11 +42,12 @@ box_style = "both";		// "bolt" for bolting the box pack together
 
 part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "holder";   		// "holder" to generate cell holders,
+part = "insulator";   		// "holder" to generate cell holders,
 						// "cap" to generate pack end caps,
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
 						// "wire clamp" for strain relief clamp
+						// "insulator" for insulator piece to fit over the nickel strips 
 
 						// Note: There are no boxes for parallelogram packs.
 
@@ -84,7 +85,8 @@ ziptie_thickness = 2.5;
 stacking_pins = false;	// Adds pins and holes for stacking holders vertically. Make sure col and row slots are the same width. You'll have to think about how to insulate the strips properly. Maybe precut fishpaper? 
 stacking_pin_dia = 3;	// Default 3 mm. Smaller than 3 not recommended.
 stacking_pin_alt_style = true; // Alternate style of pins that are longer and go into the holder deeper. (Used when the triangle islands are too small for a hole)
-stacking_bolts = true;	// Adds holes through the holders to bolt them. Don't use with stacking pins. You'll need mirrored pieces.
+stacking_bolts = true;	// Adds holes through the holders to bolt them. !!!!!!MAKE SURE BOLTS DO NOT SHORT NICKEL STRIPS!!!!
+						// Don't use with stacking pins. You'll need mirrored pieces.
 stacking_bolt_dia = 4.5;	// Bolt dia. Make slightly bigger for bolt fit. Watch out for too large bolts that cut too much out of the holder.
 
 
@@ -103,6 +105,8 @@ cell_tab_width = 5;			// Width of tab that keeps the cell in the holder default 
 cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder default = 3
 box_lip_height = box_wall * 0.75;	// Height of lip default = box_wall * 0.75
 stacking_pins_tolerance = 0.5;	// How much larger for the stacking pin hole compared to it's pin diameter
+insulator_tolerance = 1;	// How much smaller to make the width of the insulator default 1
+insulator_thickness = (slot_height-0.5);	// Thickness of insulator default slot_height - 0.5
 
 
 
@@ -278,14 +282,6 @@ wire_clamp_nib_dia = 5;
 		}
 
 		else if (part == "holder")
-			// intersection()	// TESTING remove all but regular_pack()
-			// {
-			// 	regular_pack();
-			// 	a = 2;
-			// 	x = get_hex_center_points_rect(num_rows,num_cols);
-			// 	translate([x[a].x,x[a].y,-slot_height*3])
-			// 	hex(holder_height+100, hex_pt*1.5 + hextra);
-			// }
 			rotate([0,180,0])
 				regular_pack();
 			
@@ -302,6 +298,10 @@ wire_clamp_nib_dia = 5;
 		}
 		else if (part == "wire clamp")
 			wire_clamp();
+		else if(part == "insulator")
+		{
+			strip_insulator();
+		}
 
 }
 
@@ -875,6 +875,73 @@ module cell_tabs()
 
 			}
 		}
+}
+
+// Generates a insulator to fit inside the nickel strip channels, also doubles as a spacer
+// TODO: support para too
+// Add cut outs for stacking bolts
+
+module strip_insulator()
+{
+	// TESTING
+	// mirror([0,0,1])
+	// translate([0,0,-holder_height])
+	// regular_pack();
+
+	// Use difference code from hex cells
+	// intersection it with hexes
+	if(pack_style == "rect")
+	{
+		difference()
+		{
+			for(hex_list = get_hex_center_points_rect(num_rows,num_cols))
+			{
+			// Iterate through each hex center and place a hex cell
+			translate([hex_list.x,hex_list.y,0])
+				{	
+					intersection()
+					{
+						union()
+						{
+							// Hex block
+							hex(holder_height-slot_height + insulator_thickness, hex_pt + hextra);
+						}
+
+						union()
+						{
+							// 1st column slot
+							rotate([0,0,60])
+								translate([0,0,holder_height + slot_height])
+									cube([hex_w+1,col_slot_width-insulator_tolerance,4*slot_height], center=true);
+
+							// 2nd column slot
+							rotate([0,0,-60])
+								translate([0,0,holder_height + slot_height])
+									cube([hex_w+1,col_slot_width-insulator_tolerance,4*slot_height], center=true);
+
+							// Row slot
+							translate([0,0,holder_height + slot_height])
+								cube([hex_w+1,row_slot_width-insulator_tolerance,4*slot_height], center=true);
+						}
+						
+
+					}
+				}	
+			}
+
+			// cut out stacking bolt holes
+			if(stacking_bolts)
+			{
+				for(bolt_holes_list = concat(get_pin_holes_list_rect(num_rows,num_cols), get_pin_list_rect(num_rows,num_cols)))
+				{
+					// add hole
+					translate([bolt_holes_list.x,bolt_holes_list.y,0])
+						cylinder(d = stacking_bolt_dia, h = holder_height*2);
+				}
+			}
+		}
+	}
+
 }
 
 // Generates support for the box for bolts and zipties. spacer parameter addes a spacer incase there is extra space on the boxes for wires.
