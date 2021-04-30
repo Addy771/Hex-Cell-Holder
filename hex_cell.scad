@@ -40,7 +40,7 @@ box_style = "both";		// "bolt" for bolting the box pack together
 						// "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out),
 						// "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
 
-part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
+part_type = "assembled";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
 part = "vertical box section";   		// "holder" to generate cell holders,
 						// "cap" to generate pack end caps,
@@ -64,7 +64,7 @@ box_clearance = 0.2;		// Clearance between holder and box default = 0.2
 
 
 // Box clearances for wires
-bms_clearance = 8; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
+bms_clearance = 0; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
 box_bottom_clearance = 0;	// Vertical space for wires on bottom of box
 box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 0; // Horizontal space from left side (opposite of wire hole) to the box wall for wires
@@ -135,7 +135,7 @@ insulator_thickness = (slot_height-0.5);	// Thickness of insulator default slot_
 // [] Add insulator to bat file
 // [] Add some more echo helper messages
 // [] When using vertical stacking boxes, bolt holes should be changed to bolt size instead of tap size.
-// [] Double check box_lip_height usage versus box_wall/2 in some cases with the lid and bottom lips
+// [x] Double check box_lip_height usage versus box_wall/2 in some cases with the lid and bottom lips
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -227,26 +227,70 @@ wire_clamp_nib_dia = 5;
 			union()
 			{
 				mock_pack();	// for debugging for now
-				translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
-					mirror([0,0,1])
+
+
+				if(part == "vertical box section")
+				{
+					// iterate through packs
+					for(i = [1:num_pack_stacks-1])
 					{
-						color("green", alpha = 0.7)
-						regular_box_lid();
-						color("orange", alpha = 0.7)
-								translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
+						translate([0,0,get_mock_pack_height()*i])
+						{
+							mock_pack();
+							// vertical section box
+							color("darkgreen", alpha =0.8)
+								translate([0,0,box_bottom_height -(box_clearance+box_wall)-get_mock_pack_height()])
+									vertical_box_section();
+
+							if(i == num_pack_stacks-1)
+							{
+								// lid
+								translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
 									mirror([0,0,1])
-										wire_clamp();
+									{
+										color("green", alpha = 0.7)
+										regular_box_lid();
+										color("orange", alpha = 0.7)
+												translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
+													mirror([0,0,1])
+														wire_clamp();
+									}
+							}
+						}
+							
 					}
+					
+				}
+				else
+				{
+					//normal non stacking assembly
+					// lid
+					translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
+						mirror([0,0,1])
+						{
+							color("green", alpha = 0.7)
+							regular_box_lid();
+							color("orange", alpha = 0.7)
+									translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
+										mirror([0,0,1])
+											wire_clamp();
+						}
+				}
 
 
+
+				
+
+				// bottom
 				color("lightgreen", alpha = 0.7)
 					translate([0,0,-box_bottom_clearance])
 						regular_box_bottom();
 			}
 			// testing cutout
 			translate([0,50,50])
-				cube([100,20,150], center = true);
+				cube([150,20,2000], center = true);
 		}
+
 		translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*2,get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance),0])
 		{
 			mock_pack();	// for debugging for now  - 2 * (box_wall + box_clearance) - bms_clearance
@@ -510,7 +554,7 @@ module regular_box_lid()
 						// Lip Positive ( lip is added to box_lid and subtracted from box_bottom)
 						if(box_lip)
 						{
-							translate([0,0,box_lid_height -box_wall/2])
+							translate([0,0,box_lid_height-box_wall/2])
 								rect_cap_positive(box_wall/2,box_clearance,box_lip_height,box_wire_side_clearance,box_nonwire_side_clearance);
 						}
 
@@ -967,16 +1011,38 @@ module vertical_box_section(num_stacks = 1)
 				// main box 
 				difference()
 				{
-					translate([0,0,box_wall+box_clearance])
-						rect_cap_positive(box_wall,box_clearance,vertical_box_section_height*num_stacks,box_wire_side_clearance,box_nonwire_side_clearance);
+					union()
+					{
+						translate([0,0,box_wall+box_clearance])
+							rect_cap_positive(box_wall,box_clearance,vertical_box_section_height*num_stacks,box_wire_side_clearance,box_nonwire_side_clearance);
+						// lip addition
+						if(box_lip)
+						{
+							translate([0,0,-(box_wall - box_clearance)+box_lip_height])
+								rect_cap_positive(box_wall/2,box_clearance,box_lip_height,box_wire_side_clearance,box_nonwire_side_clearance);
+						}
+					}
+					
+
 					// hollow out
-					translate([0,0,-extra])
+					translate([0,0,-box_lip_height-extra])
 						rect_cap_negative(box_wall,box_clearance,vertical_box_section_height*num_stacks*2,box_wire_side_clearance,box_nonwire_side_clearance);
 				}
-				translate([0,0,box_wall+box_clearance-box_lip_height])
-					both_lid_supports(vertical_box_section_height*num_stacks+box_lip_height,0);
-				
 
+				if(box_lip)
+				{
+					translate([0,0,(box_wall+box_clearance)-box_lip_height])
+						both_lid_supports(vertical_box_section_height*num_stacks+box_lip_height,0);
+				}
+				else
+				{
+					translate([0,0,(box_wall+box_clearance)])
+						both_lid_supports(vertical_box_section_height*num_stacks,0);
+				}
+				
+				
+				
+				
 				//%cylinder(d=50,h = vertical_box_section_height*num_stacks); // helper cylinder
 			}
 
