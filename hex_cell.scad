@@ -19,14 +19,14 @@ cell_dia = 18.4;    // Cell diameter default = 18.4 for 18650s **PRINT OUT TEST 
 cell_height = 65;	// Cell height default = 65 for 18650s
 wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
 
-num_rows = 3;
-num_cols = 3;
+num_rows = 9;
+num_cols = 5;
 
 holder_height = 10; // Total height of cell holder default = 15
 slot_height = 3;  // Height of all slots default = 3 mm
 
 
-col_slot_width = 10.5; // Width of slots between rows default = 8
+col_slot_width = 8; // Width of slots between rows default = 8
 row_slot_width = 10.5; // Width of slots along rows default = 8
 
 cell_top_overlap = 3; // How big the opening overlaps the cell default = 3
@@ -36,13 +36,13 @@ pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram, "
 wire_style = "strip";	// "strip" to make space to run nickel strips between cells. Default usage
 						// "bus" to make space for bus wires between rows
 
-box_style = "both";		// "bolt" for bolting the box pack together
+box_style = "bolt";		// "bolt" for bolting the box pack together
 						// "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out),
 						// "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
 
-part_type = "assembled";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
+part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "vertical box section";   		// "holder" to generate cell holders,
+part = "box lid";   		// "holder" to generate cell holders,
 						// "cap" to generate pack end caps,
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
@@ -55,21 +55,23 @@ part = "vertical box section";   		// "holder" to generate cell holders,
 
 
 box_lip = true;			// Adds a lip to the box pieces. default = true.
+wire_clamp_add = false; 	// Adds a wire exit hole out the side of the box lid.
+
 
 cap_wall = 1.2;				// Cap wall thickness (default = 1.2 recommend to make a multiple of nozzle dia)
 cap_clearance = 0.2;		// Clearance between holder and caps default = 0.2
 
-box_wall = 2;				// Box wall thickness (default = 2.0 recommend to make at least 4 * multiple of nozzle dia)
+box_wall = 4;				// Box wall thickness (default = 2.0 recommend to make at least 4 * multiple of nozzle dia)
 box_clearance = 0.2;		// Clearance between holder and box default = 0.2
 
 
 // Box clearances for wires
-bms_clearance = 0; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
+bms_clearance = 15; 			// Vertical space for the battery management system (bms) on top of holders, set to 0 for no extra space
 box_bottom_clearance = 0;	// Vertical space for wires on bottom of box
 box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 0; // Horizontal space from left side (opposite of wire hole) to the box wall for wires
 
-wire_diameter = 2;			// Diameter of 1 power wire used in the strain relief clamps default = 5 for 10 awg stranded silicon wire
+wire_diameter = 5;			// Diameter of 1 power wire used in the strain relief clamps default = 5 for 10 awg stranded silicon wire
 wire_clamp_bolt_dia = 3;	// Bolt dia used for clamping wire default = 3 for M3 bolt
 clamp_factor = 0.7;			// Factor of wire diameter to be clamped. Higher number is less clamping force (default=0.7 max=1.0)
 bolt_dia = 3;				// Actual dia of bolt default = 3 for M3 bolt
@@ -94,7 +96,8 @@ stacking_bolts = false;	// Adds holes through the holders to bolt them (if not u
 						// !!!!!!MAKE SURE BOLTS DO NOT SHORT NICKEL STRIPS!!!!
 						// Don't use with stacking pins. You'll need mirrored pieces.
 stacking_bolt_dia = 4.5;	// Bolt dia. Make slightly bigger for bolt fit. Watch out for too large bolts that cut too much out of the holder.
-num_pack_stacks = 4;	// How many packs you will stack vertically. Affects part = vertical box section. 
+num_pack_stacks = 3;	// How many additional packs you will stack vertically. Affects part = vertical box section. (set to 1 if you just want to print single sections and glue them together. 1 section for every additional pack stack)
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -112,8 +115,11 @@ cell_tab_width = 5;			// Width of tab that keeps the cell in the holder default 
 cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder default = 3
 box_lip_height = box_wall * 0.75;	// Height of lip default = box_wall * 0.75
 stacking_pins_tolerance = 0.5;	// How much larger for the stacking pin hole compared to it's pin diameter
-insulator_tolerance = 1;	// How much smaller to make the width of the insulator default 1
-insulator_thickness = (slot_height-0.5);	// Thickness of insulator default slot_height - 0.5
+
+insulator_as_support = true;	// EXPERIMENTAL Print the insulator as a part of the holder support material. 
+support_z_gap = 0.4;		// Insulator gap to holder.
+insulator_tolerance = 1.5;	// How much smaller to make the width of the insulator default 1.5
+insulator_thickness = (slot_height-support_z_gap);	// Thickness of insulator default slot_height - 0.5
 
 
 
@@ -133,8 +139,7 @@ insulator_thickness = (slot_height-0.5);	// Thickness of insulator default slot_
 // [x] Fixed boxes spacers
 // [] Add vertical stacking boxes
 // [] Add insulator to bat file
-// [] Add some more echo helper messages
-// [] When using vertical stacking boxes, bolt holes should be changed to bolt size instead of tap size.
+// [] Add some more echo helper messages for mirrored pieces wrt to stacking pins/bolt
 // [x] Double check box_lip_height usage versus box_wall/2 in some cases with the lid and bottom lips
 
 
@@ -232,7 +237,7 @@ wire_clamp_nib_dia = 5;
 				if(part == "vertical box section")
 				{
 					// iterate through packs
-					for(i = [1:num_pack_stacks-1])
+					for(i = [1:num_pack_stacks])
 					{
 						translate([0,0,get_mock_pack_height()*i])
 						{
@@ -242,7 +247,7 @@ wire_clamp_nib_dia = 5;
 								translate([0,0,box_bottom_height -(box_clearance+box_wall)-get_mock_pack_height()])
 									vertical_box_section();
 
-							if(i == num_pack_stacks-1)
+							if(i == num_pack_stacks)
 							{
 								// lid
 								translate([0,0,box_bottom_height + box_lid_height - 2 * (box_wall + box_clearance) - box_bottom_clearance])
@@ -250,10 +255,14 @@ wire_clamp_nib_dia = 5;
 									{
 										color("green", alpha = 0.7)
 										regular_box_lid();
-										color("orange", alpha = 0.7)
+										if(wire_clamp_add)
+										{
+											color("orange", alpha = 0.7)
 												translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
 													mirror([0,0,1])
 														wire_clamp();
+										}
+										
 									}
 							}
 						}
@@ -270,10 +279,14 @@ wire_clamp_nib_dia = 5;
 						{
 							color("green", alpha = 0.7)
 							regular_box_lid();
-							color("orange", alpha = 0.7)
+							if(wire_clamp_add)
+							{
+								color("orange", alpha = 0.7)
 									translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
 										mirror([0,0,1])
 											wire_clamp();
+							}
+							
 						}
 				}
 
@@ -299,10 +312,14 @@ wire_clamp_nib_dia = 5;
 				{
 					color("green", alpha = 0.7)
 					regular_box_lid();
-					color("orange", alpha = 0.7)
-						translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
-							mirror([0,0,1])
-								wire_clamp();
+					if(wire_clamp_add)
+					{
+						color("orange", alpha = 0.7)
+							translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
+								mirror([0,0,1])
+									wire_clamp();
+					}
+					
 				}
 
 
@@ -333,7 +350,15 @@ wire_clamp_nib_dia = 5;
 
 		else if (part == "holder")
 			rotate([0,180,0])
+			{
 				regular_pack();
+				if(insulator_as_support)
+				{
+					translate([0,0,-holder_height+slot_height])
+						strip_insulator();
+				}
+			}
+				
 			
 		else if (part == "box lid")
 		{
@@ -354,7 +379,7 @@ wire_clamp_nib_dia = 5;
 		}
 		else if(part == "vertical box section")
 		{
-			vertical_box_section(num_pack_stacks-1);
+			vertical_box_section(num_pack_stacks);
 		}
 
 }
@@ -367,9 +392,11 @@ wire_clamp_nib_dia = 5;
 echo(pack_height_holder = get_mock_pack_height());
 echo(box_lid_height = box_lid_height);
 echo(box_bottom_height = box_bottom_height);
+echo(box_total_height = box_lid_height+box_bottom_height -box_lip_height);
 echo(box_total_length = get_box_total_length());
 echo(box_total_width = get_box_total_width());
-echo(vertical_box_section_height = vertical_box_section_height * (num_pack_stacks-1) + box_lip_height);
+echo(vertical_box_section_height = vertical_box_section_height * (num_pack_stacks) + box_lip_height);
+echo(box_total_height_with_vertical_stacking = box_bottom_height + box_lid_height + vertical_box_section_height * num_pack_stacks - box_lip_height);
 
 echo(total_width_holder = get_hex_length_pt(num_rows)+hex_pt*2);
 if (pack_style == "rect")
@@ -560,20 +587,28 @@ module regular_box_lid()
 
 
 						// Wire support hole
-						translate([(num_cols * hex_w + box_wire_side_clearance + box_clearance_x + box_wall_x) - (box_wall_x + box_clearance_x + hex_w/2 + extra),-(wire_hole_width + 2 * (wire_clamp_support)) /2,-(box_wall + box_clearance)])
+						if(wire_clamp_add)
+						{
+							translate([(num_cols * hex_w + box_wire_side_clearance + box_clearance_x + box_wall_x) - (box_wall_x + box_clearance_x + hex_w/2 + extra),-(wire_hole_width + 2 * (wire_clamp_support)) /2,-(box_wall + box_clearance)])
 							cube([wire_hole_length + box_wall_x + box_clearance_x + hex_w/2 + extra,wire_hole_width + 2 * (wire_clamp_support),box_lid_height]);
-
+						}
+						
 					}
 					// Negatives
 					rect_cap_negative(box_wall,box_clearance,box_lid_height*2,box_wire_side_clearance,box_nonwire_side_clearance);
-					// Wire hole cutout
-					translate([(num_cols)*hex_w+box_clearance_x + box_wall_x +box_wire_side_clearance,0,wire_top_wall - box_wall + box_lid_height/2])
+					if(wire_clamp_add)
+					{
+						// Wire hole cutout
+						translate([(num_cols)*hex_w+box_clearance_x + box_wall_x +box_wire_side_clearance,0,wire_top_wall - box_wall + box_lid_height/2])
 						cube([(wire_hole_length + box_wall_x + box_clearance_x + hex_w/2) * 2 + box_wall *3,wire_hole_width,box_lid_height], center = true);
-					// Strain relief bolt cutouts
-					translate([(num_cols)*hex_w+box_clearance_x + box_wall_x + box_wire_side_clearance + wire_hole_length/2,(wire_hole_width + wire_clamp_support)/2,0])
-						cylinder(d = wire_clamp_bolt_dia * 0.9, h=wire_top_wall + box_lid_height);
-					translate([(num_cols)*hex_w+box_clearance_x + box_wall_x + box_wire_side_clearance + wire_hole_length/2,-(wire_hole_width + wire_clamp_support)/2,0])
-						cylinder(d = wire_clamp_bolt_dia * 0.9, h=wire_top_wall + box_lid_height);
+						// Strain relief bolt cutouts
+						translate([(num_cols)*hex_w+box_clearance_x + box_wall_x + box_wire_side_clearance + wire_hole_length/2,(wire_hole_width + wire_clamp_support)/2,0])
+							cylinder(d = wire_clamp_bolt_dia * 0.9, h=wire_top_wall + box_lid_height);
+						translate([(num_cols)*hex_w+box_clearance_x + box_wall_x + box_wire_side_clearance + wire_hole_length/2,-(wire_hole_width + wire_clamp_support)/2,0])
+							cylinder(d = wire_clamp_bolt_dia * 0.9, h=wire_top_wall + box_lid_height);
+					}
+					
+					
 				}
 				// Lid supports
 				if(box_lip)
