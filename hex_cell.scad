@@ -7,7 +7,7 @@
 //
 // This file was created by Addy and is released as public domain
 // Contributors
-// Albert Phan - Added boxes and optimizations
+// Albert Phan - Added boxes, stacking, and optimizations
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19,15 +19,15 @@ cell_dia = 18.4;    // Cell diameter default = 18.4 for 18650s **PRINT OUT TEST 
 cell_height = 65;	// Cell height default = 65 for 18650s
 wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
 
-num_rows = 9;
-num_cols = 5;
+num_rows = 2;
+num_cols = 3;
 
-holder_height = 10; // Total height of cell holder default = 15
+holder_height = 10; // Total height of cell holder default = 10
 slot_height = 3;  // Height of all slots default = 3 mm
 
 
 col_slot_width = 8; // Width of slots between rows default = 8
-row_slot_width = 10.5; // Width of slots along rows default = 8
+row_slot_width = 8; // Width of slots along rows default = 8
 
 cell_top_overlap = 3; // How big the opening overlaps the cell default = 3
 
@@ -40,9 +40,9 @@ box_style = "bolt";		// "bolt" for bolting the box pack together
 						// "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out),
 						// "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
 
-part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
+part_type = "both";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "box lid";   		// "holder" to generate cell holders,
+part = "holder";   		// "holder" to generate cell holders,
 						// "cap" to generate pack end caps,
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
@@ -83,15 +83,16 @@ ziptie_thickness = 2.5;
 ////////////////////////////////////////////////////////////////////////////////////
 // EXPERIMENTAL Vertical Holder Stacking
 // Use at own risk - Stacking holders vertically requires more thought into electrical short prevention.
+// For best use, col and row slots sizes should be the same so the pin is centered
 // Rectangular packs only
-// Using stacking pins or bolts require you to cut holes out for the fishpaper for the insulation.
-// If you don't use stacking pins or bolts, you can print out insulators (use part = insulator) and add fishpaper without cutting holes in it on top.
+// Using stacking pins or bolts require you to cut holes out for the kapton tape/fishpaper for the insulation.
+// If you don't use stacking pins or bolts, you can print out insulators (use part = insulator) and add kapton/fishpaper without cutting holes in it on top.
 // The fishpaper is a last line of protection to prevent shorts in case the plastic insulation melts due to a malfunction.
 ///////////////////////////////////////////////////////////////////////////////////
 
-stacking_pins = false;	// Adds pins and holes for stacking holders vertically. Make sure col and row slots are the same width. You'll have to think about how to insulate the strips properly. Maybe precut fishpaper? 
+stacking_pins = false;	// Adds pins and holes for stacking holders vertically. Make sure col and row slots are the same width. You'll have to think about how to insulate the strips properly. Maybe precut kapton/fishpaper? 
 stacking_pin_dia = 3;	// Default 3 mm. Smaller than 3 not recommended.
-stacking_pin_alt_style = true; // Alternate style of pins that are longer and go into the holder deeper. (Used when the triangle islands are too small for a hole)
+stacking_pin_alt_style = false; // Alternate style of pins that are longer and go into the holder deeper. (Used when the triangle islands are too small for a hole)
 stacking_bolts = false;	// Adds holes through the holders to bolt them (if not using box to bolt them together). 
 						// !!!!!!MAKE SURE BOLTS DO NOT SHORT NICKEL STRIPS!!!!
 						// Don't use with stacking pins. You'll need mirrored pieces.
@@ -133,13 +134,15 @@ insulator_thickness = (slot_height-support_z_gap);	// Thickness of insulator def
 // TODO:
 // [x] Vertical Stacking Pins
 // [x] Vertical Stacking Bolts
-// [] Add insulators
+// [x] Add insulators
 //	[x] rect support
 //	[] other styles support
 // [x] Fixed boxes spacers
-// [] Add vertical stacking boxes
-// [] Add insulator to bat file
+// [x] Add vertical stacking boxes
+// [x] Add insulator to bat file
 // [] Add some more echo helper messages for mirrored pieces wrt to stacking pins/bolt
+// [] Add insulation to "both" part types
+// [x] Don't do mirrored versions for Both parts unless needed. 
 // [x] Double check box_lip_height usage versus box_wall/2 in some cases with the lid and bottom lips
 
 
@@ -197,20 +200,33 @@ wire_clamp_nib_dia = 5;
 				// Second holder
 				if(num_rows % 2 == 1)   // If odd pack move pack over to nest properly
 				{
-								mirror([1,0,0])	// mirrored for bolt stacking holes
-									rotate([0,0,180])
+								
 									if (part == "holder")
 									{	
-											translate([-(hex_w*0.5), (1.5*(hex_pt) + spacing),0])
-											regular_pack();
+										if(stacking_bolts)
+										{
+											mirror([1,0,0])	// mirrored for bolt stacking holes
+												rotate([0,0,180])
+													translate([-(hex_w*0.5), (1.5*(hex_pt) + spacing),0])
+													regular_pack();
+										}
+										else	// not mirrored for anything but bolt stacking holes
+										{
+											rotate([0,0,0])
+												translate([-(hex_w*0.5), -(1.5*(hex_pt) * num_rows+ spacing),0])
+													regular_pack();
+										}
 									}
 				}
 				else	// if even pack
 				{
-					mirror([0,1,0])	// mirrored for bolt stacking holes
+					
 						if (part == "holder")
+						{
+						mirror([0,1,0])	// mirrored for bolt stacking holes
 							translate([hex_w*0.5,1.5*hex_pt + spacing,0])
 								regular_pack();
+						}
 				}
 			}
 		}
