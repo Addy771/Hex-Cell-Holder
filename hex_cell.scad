@@ -17,10 +17,12 @@
 
 cell_dia = 18.4;    // Cell diameter default = 18.4 for 18650s **PRINT OUT TEST FIT PIECE STL FIRST**
 cell_height = 65;	// Cell height default = 65 for 18650s
-wall = 1.2;         // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
+wall = 1.6;       // Wall thickness around a single cell. Make as a multiple of the nozzle diameter. Spacing between cells is twice this amount. default = 1.2
+					// If using bought injection molded hexes, take the distance between the centers of 2 cells and divide by two for the wall thickness. Add space for the protuding interlocking tabs in the cap or box clearances.
 
-num_rows = 2;
-num_cols = 3;
+
+num_rows = 6;
+num_cols = 8;
 
 holder_height = 10; // Total height of cell holder default = 10
 slot_height = 3;  // Height of all slots default = 3 mm
@@ -31,7 +33,7 @@ row_slot_width = 8; // Width of slots along rows default = 8
 
 cell_top_overlap = 3; // How big the opening overlaps the cell default = 3
 
-pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram, "tria" for triangle shaped pack (number of rows define the amount of rows at the bottom of the triangle. Columns get ignored)
+pack_style = "para";	// "rect" for rectangular pack, "para" for parallelogram, "tria" for triangle shaped pack (number of rows define the amount of rows at the bottom of the triangle. Columns get ignored)
 
 wire_style = "strip";	// "strip" to make space to run nickel strips between cells. Default usage
 						// "bus" to make space for bus wires between rows
@@ -40,9 +42,9 @@ box_style = "bolt";		// "bolt" for bolting the box pack together
 						// "ziptie" for using zipties to fasten the box together. (ziptie heads will stick out),
 						// "both" uses bolts for the 4 corners and zipties inbetween. Useful for mounting the pack to something with zipties but while still using bolts to hold it together
 
-part_type = "both";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
+part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any # of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "holder";   		// "holder" to generate cell holders,
+part = "box bottom";   		// "holder" to generate cell holders,
 						// "cap" to generate pack end caps,
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
@@ -55,13 +57,13 @@ part = "holder";   		// "holder" to generate cell holders,
 
 
 box_lip = true;			// Adds a lip to the box pieces. default = true.
-wire_clamp_add = false; 	// Adds a wire exit hole out the side of the box lid.
+wire_clamp_add = true; 	// Adds a wire exit hole out the side of the box lid.
 
 
 cap_wall = 1.2;				// Cap wall thickness (default = 1.2 recommend to make a multiple of nozzle dia)
 cap_clearance = 0.2;		// Clearance between holder and caps default = 0.2
 
-box_wall = 4;				// Box wall thickness (default = 2.0 recommend to make at least 4 * multiple of nozzle dia)
+box_wall = 2.0;				// Box wall thickness (default = 2.0 recommend to make at least 4 * multiple of nozzle dia)
 box_clearance = 0.2;		// Clearance between holder and box default = 0.2
 
 
@@ -112,8 +114,6 @@ wire_hole_length = 10;		// Length of the wireclamp that sticks out default = 10
 wire_top_wall = 4;			// Thickness of top wire wall default = 4mm
 clamp_plate_height = 4;		// default = 4
 bolt_dia_clearance = 1;		// Amount of extra diameter for bolt holes default = 1
-cell_tab_width = 5;			// Width of tab that keeps the cell in the holder default = 5
-cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder default = 3
 box_lip_height = box_wall * 0.75;	// Height of lip default = box_wall * 0.75
 stacking_pins_tolerance = 0.5;	// How much larger for the stacking pin hole compared to it's pin diameter
 
@@ -122,7 +122,8 @@ support_z_gap = 0.4;		// Insulator gap to holder.
 insulator_tolerance = 1.5;	// How much smaller to make the width of the insulator default 1.5
 insulator_thickness = (slot_height-support_z_gap);	// Thickness of insulator default slot_height - 0.5
 
-
+// cell_tab_width = 5;			// Width of tab that keeps the cell in the holder default = 5
+// cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder default = 3
 
 //////////////////////////////////////////////////////
 // Don't forget to do a test fit print
@@ -141,7 +142,7 @@ insulator_thickness = (slot_height-support_z_gap);	// Thickness of insulator def
 // [x] Add vertical stacking boxes
 // [x] Add insulator to bat file
 // [] Add some more echo helper messages for mirrored pieces wrt to stacking pins/bolt
-// [] Add insulation to "both" part types
+// [x] Add insulation to "both" part types
 // [x] Don't do mirrored versions for Both parts unless needed. 
 // [x] Double check box_lip_height usage versus box_wall/2 in some cases with the lid and bottom lips
 
@@ -173,7 +174,7 @@ wire_clamp_nib_dia = 5;
 		if (part == "cap")
 		{
 			mirror([0,1,0])
-				regular_cap();
+				cap();
 		}
 		else if (part == "holder")
 		{
@@ -186,10 +187,10 @@ wire_clamp_nib_dia = 5;
 	{
 		if (part == "cap")
 		{
-			regular_cap();
+			cap();
 			mirror([0,1,0])
 			translate([0,2*hex_pt + 2 * (cap_wall + cap_clearance) + spacing,0])
-				regular_cap();
+				cap();
 		}
 		else if (part == "holder")
 		{
@@ -209,6 +210,7 @@ wire_clamp_nib_dia = 5;
 												rotate([0,0,180])
 													translate([-(hex_w*0.5), (1.5*(hex_pt) + spacing),0])
 													regular_pack();
+													
 										}
 										else	// not mirrored for anything but bolt stacking holes
 										{
@@ -225,7 +227,9 @@ wire_clamp_nib_dia = 5;
 						{
 						mirror([0,1,0])	// mirrored for bolt stacking holes
 							translate([hex_w*0.5,1.5*hex_pt + spacing,0])
+							{
 								regular_pack();
+							}
 						}
 				}
 			}
@@ -315,40 +319,42 @@ wire_clamp_nib_dia = 5;
 					translate([0,0,-box_bottom_clearance])
 						regular_box_bottom();
 			}
-			// testing cutout
-			translate([0,50,50])
-				cube([150,20,2000], center = true);
+
+			// sectional analysis testing cutout
+			// translate([0,50,50])
+			// 	#cube([150,100,2000], center = true);
 		}
 
-		translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*2,get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance),0])
-		{
-			mock_pack();	// for debugging for now  - 2 * (box_wall + box_clearance) - bms_clearance
-			translate([0,0,get_mock_pack_height() + bms_clearance])
-				mirror([0,0,1])
-				{
-					color("green", alpha = 0.7)
-					regular_box_lid();
-					if(wire_clamp_add)
-					{
-						color("orange", alpha = 0.7)
-							translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
-								mirror([0,0,1])
-									wire_clamp();
-					}
+		// Additional assembled packs
+		// translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*2,get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance),0])
+		// {
+		// 	mock_pack();	// for debugging for now  - 2 * (box_wall + box_clearance) - bms_clearance
+		// 	translate([0,0,get_mock_pack_height() + bms_clearance])
+		// 		mirror([0,0,1])
+		// 		{
+		// 			color("green", alpha = 0.7)
+		// 			regular_box_lid();
+		// 			if(wire_clamp_add)
+		// 			{
+		// 				color("orange", alpha = 0.7)
+		// 					translate([(get_hex_length(num_cols + 1) + box_wire_side_clearance + box_wall + box_clearance + wire_hole_length/2),0,box_lid_height-box_wall-box_clearance])
+		// 						mirror([0,0,1])
+		// 							wire_clamp();
+		// 			}
 					
-				}
+		// 		}
 
 
-		}
+		// }
 
-		translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*4,(get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance)) * 3,0])
-			{
-				mock_pack();	// for debugging for now
-				color("lightgreen", alpha = 0.7)
-					translate([0,0,-(box_bottom_clearance)])
-						regular_box_bottom();
+		// translate([(get_hex_length(num_rows+2)+ 2*(box_wall + box_clearance) + box_nonwire_side_clearance + box_wire_side_clearance)*4,(get_hex_length_pt(num_cols+2) + 2*(box_wall + box_clearance)) * 3,0])
+		// 	{
+		// 		mock_pack();	// for debugging for now
+		// 		color("lightgreen", alpha = 0.7)
+		// 			translate([0,0,-(box_bottom_clearance)])
+		// 				regular_box_bottom();
 
-			}
+		// 	}
 
 
 
@@ -361,18 +367,13 @@ wire_clamp_nib_dia = 5;
 	{
 		if (part == "cap")
 		{
-			regular_cap();
+			cap();
 		}
 
 		else if (part == "holder")
 			rotate([0,180,0])
 			{
 				regular_pack();
-				if(insulator_as_support)
-				{
-					translate([0,0,-holder_height+slot_height])
-						strip_insulator();
-				}
 			}
 				
 			
@@ -505,29 +506,28 @@ module para_cap_negative(cap_wall,cap_clearance,cap_height = holder_height,posit
 		}
 }
 
-
-module rect_cap(cap_wall = cap_wall, cap_clearance = cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
+module cap(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
 {
 	difference()
 	{
-		// Positive Hull
-		rect_cap_positive(cap_wall,cap_clearance,cap_height,positive_x,negative_x,positive_y,negative_y);
-		// Negative Hull
-		rect_cap_negative(cap_wall,cap_clearance,cap_height,positive_x,negative_x,positive_y,negative_y);
-
+	// Positive Hull
+	cap_positive(cap_wall,cap_clearance,cap_height,positive_x,negative_x,positive_y,negative_y);
+	// Negative Hull
+	cap_negative(cap_wall,cap_clearance,cap_height,positive_x,negative_x,positive_y,negative_y);
 	}
 }
 
-// Generates the rectangular cap positive piece used in rect_cap and box. Default height is holder height
+// Generates the rectangular cap positive piece used in caps and boxes. Default height is holder height
 // height includes wall thickness and clearance
 // Z Origin is -(cap_wall + cap_clearance)
 // Positive_x = amount of clearance between the positive x box wall and the holder.
 // Negative_x = amount of clearance between the negative x box wall and the holder.
 // Same goes for y
-
-module rect_cap_positive(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
+module cap_positive(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
 {
-	translate([0,0,-(cap_wall + cap_clearance)])
+	if(pack_style=="rect")
+	{
+		translate([0,0,-(cap_wall)])
 		hull()
 		{
 			// Generate 4 hexes in each corner and hull them together
@@ -544,16 +544,38 @@ module rect_cap_positive(cap_wall,cap_clearance,cap_height = holder_height,posit
 			translate([get_hex_length(num_cols + 0.5) + positive_x,get_hex_length_pt(num_rows) + positive_y,0])
 				hex(cap_height,hex_pt + cap_wall + cap_clearance);
 		}
-}
-
-// Generates the rect_cap negative piece (as a positive to be cut out using difference) used in rect_cap and box. This is basically the same as rect_cap_positive but the hexes are smaller by cap_wall and
-// z origin = 0
-// TODO: With rect_cap_negative now very similiar to rect_cap_positive, is it really required anymore?
-module rect_cap_negative(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
-{
+	}
+	else if(pack_style=="para")
+	{
+		translate([0,0,-(cap_wall + cap_clearance)])
 		hull()
 		{
+			// Generate 4 hexes in each corner and hull them together
+			// [0,0] Bottom left
+			translate([-negative_x,-negative_y,0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
+			// [1,0] Bottom right
+			translate([get_hex_length(num_cols)+ positive_x,-(negative_y),0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
+			// [0,1] Top left
+			translate([get_hex_length(num_rows/2 +0.5)-(negative_x),get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
+			//  [1,1] Top right
+			translate([get_hex_length(num_cols + num_rows/2-0.5) + positive_x,get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt + cap_wall + cap_clearance);
+		}
+	}
+}
 
+
+// Generates the cap negative piece (as a positive to be cut out using difference) used in cap and box. This is basically the same as cap_positive but the hexes are smaller by cap_wall and
+// z origin = 0
+module cap_negative(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
+{
+	if(pack_style=="rect")
+	{
+		hull()
+		{
 			// Generate 4 hexes in each corner and hull them together
 			// [0,0] Bottom left
 			translate([-negative_x,-negative_y,0])
@@ -568,13 +590,26 @@ module rect_cap_negative(cap_wall,cap_clearance,cap_height = holder_height,posit
 			translate([get_hex_length(num_cols + 0.5) + positive_x,get_hex_length_pt(num_rows) + positive_y,0])
 				hex(cap_height,hex_pt + cap_clearance);
 		}
-}
-module regular_cap()
-{
-    if (pack_style == "rect")
-        rect_cap();
-    else if (pack_style == "para")
-        para_cap();
+	}
+	else if(pack_style=="para")
+	{
+		hull()
+		{
+			// Generate 4 hexes in each corner and hull them together
+			// [0,0] Bottom left
+			translate([-negative_x,-negative_y,0])
+				hex(cap_height,hex_pt + cap_clearance);
+			// [1,0] Bottom right
+			translate([get_hex_length(num_cols)+ positive_x,-(negative_y),0])
+				hex(cap_height,hex_pt + cap_clearance);
+			// [0,1] Top left
+			translate([get_hex_length(num_rows/2 +0.5)-(negative_x),get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt  + cap_clearance);
+			//  [1,1] Top right
+			translate([get_hex_length(num_cols + num_rows/2-0.5) + positive_x,get_hex_length_pt(num_rows) + positive_y,0])
+				hex(cap_height,hex_pt + cap_clearance);
+		}
+	}
 }
 
 module regular_box_lid()
@@ -583,40 +618,37 @@ module regular_box_lid()
 	{
 		difference()
 		{
-
-
 			union()
 			{
-
 				difference()
 				{
 					union()
 					{
 						// Positive
-						rect_cap_positive(box_wall,box_clearance,box_lid_height,box_wire_side_clearance, box_nonwire_side_clearance);
+						cap_positive(box_wall,box_clearance,box_lid_height,box_wire_side_clearance, box_nonwire_side_clearance);
 						// Lip Positive ( lip is added to box_lid and subtracted from box_bottom)
 						if(box_lip)
 						{
 							translate([0,0,box_lid_height-box_wall/2])
-								rect_cap_positive(box_wall/2,box_clearance,box_lip_height,box_wire_side_clearance,box_nonwire_side_clearance);
+								cap_positive(box_wall/2,box_clearance,box_lip_height,box_wire_side_clearance,box_nonwire_side_clearance);
 						}
 
 
 						// Wire support hole
 						if(wire_clamp_add)
 						{
-							translate([(num_cols * hex_w + box_wire_side_clearance + box_clearance_x + box_wall_x) - (box_wall_x + box_clearance_x + hex_w/2 + extra),-(wire_hole_width + 2 * (wire_clamp_support)) /2,-(box_wall + box_clearance)])
-							cube([wire_hole_length + box_wall_x + box_clearance_x + hex_w/2 + extra,wire_hole_width + 2 * (wire_clamp_support),box_lid_height]);
+							translate([(num_cols * hex_w + box_wire_side_clearance + box_clearance_x + box_wall_x) - (box_wall_x + box_clearance_x + num_cols/2 * hex_w/2 + extra),-(wire_hole_width + 2 * (wire_clamp_support)) /2,-(box_wall)])
+							cube([wire_hole_length + box_wall_x + box_clearance_x + num_cols/2 * hex_w/2 + extra,wire_hole_width + 2 * (wire_clamp_support),box_lid_height]);
 						}
 						
 					}
 					// Negatives
-					rect_cap_negative(box_wall,box_clearance,box_lid_height*2,box_wire_side_clearance,box_nonwire_side_clearance);
+					cap_negative(box_wall,box_clearance,box_lid_height*2,box_wire_side_clearance,box_nonwire_side_clearance);
 					if(wire_clamp_add)
 					{
 						// Wire hole cutout
 						translate([(num_cols)*hex_w+box_clearance_x + box_wall_x +box_wire_side_clearance,0,wire_top_wall - box_wall + box_lid_height/2])
-						cube([(wire_hole_length + box_wall_x + box_clearance_x + hex_w/2) * 2 + box_wall *3,wire_hole_width,box_lid_height], center = true);
+						cube([(wire_hole_length + box_wall_x + box_clearance_x + num_cols/2 * hex_w/2) * 2 + box_wall *3,wire_hole_width,box_lid_height], center = true);
 						// Strain relief bolt cutouts
 						translate([(num_cols)*hex_w+box_clearance_x + box_wall_x + box_wire_side_clearance + wire_hole_length/2,(wire_hole_width + wire_clamp_support)/2,0])
 							cylinder(d = wire_clamp_bolt_dia * 0.9, h=wire_top_wall + box_lid_height);
@@ -651,7 +683,7 @@ module regular_box_bottom()
 		{
 			union()
 			{
-				rect_cap(box_wall,box_clearance,box_bottom_height,box_wire_side_clearance,box_nonwire_side_clearance);
+				cap(box_wall,box_clearance,box_bottom_height,box_wire_side_clearance,box_nonwire_side_clearance);
 				both_lid_supports(box_bottom_height,box_bottom_clearance);
 			}
 
@@ -660,13 +692,33 @@ module regular_box_bottom()
 			if(box_lip)
 			{
 				translate([0,0,box_bottom_height-(box_wall+box_clearance)-box_lip_height])
-					rect_cap_negative(box_wall,box_clearance + box_wall/2,box_lid_height,box_wire_side_clearance,box_nonwire_side_clearance);
+					cap_negative(box_wall,box_clearance + box_wall/2,box_lid_height,box_wire_side_clearance,box_nonwire_side_clearance);
 			}
 			pick_hole_style();
 		}
 	}
 	else if (pack_style == "para")
-    // para box;
+	{
+		difference()
+		{
+			union()
+			{
+			
+				//mock_pack(); // Testing
+				cap(box_wall,box_clearance,box_bottom_height,box_wire_side_clearance,box_nonwire_side_clearance);
+				both_lid_supports(box_bottom_height,box_bottom_clearance);
+			}
+
+			// Other cutouts of entire box bottom
+			// Lip cutout
+			if(box_lip)
+			{
+				translate([0,0,box_bottom_height-(box_wall+box_clearance)-box_lip_height])
+					cap_negative(box_wall,box_clearance + box_wall/2,box_lid_height,box_wire_side_clearance,box_nonwire_side_clearance);
+			}
+			pick_hole_style();
+		}
+	}
 	;
 }
 
@@ -675,7 +727,7 @@ module regular_box_bottom()
 module mock_pack()
 {
 
-	color("blue") render(1)regular_pack();
+	color("blue") regular_pack();
 	// add 18650s
 	if(pack_style == "rect")
 	{
@@ -700,7 +752,7 @@ module mock_pack()
 	color("blue")
 		translate([0,0,slot_height + separation + cell_height + slot_height + separation])
 			mirror([0,0,1])
-				render(1)regular_pack();
+				regular_pack();
 }
 
 // Creates a mock cell. Origin is bottom of 1st hex cell holder.
@@ -712,6 +764,12 @@ module mock_cell()
 // Generates the holders
 module regular_pack()
 {
+	if(insulator_as_support)
+	{
+		translate([0,0,-holder_height+slot_height])
+			strip_insulator();
+	}
+
 	translate([0, 0, holder_height])
 	{
 		difference()
@@ -738,16 +796,12 @@ module regular_pack()
 				}
 				else if(pack_style == "tria")
 				{
-
-				for(row = [0:num_rows-1])
-				{
-					translate([row*(0.5 * hex_w),1.5*(hex_pt)*row,0])
-					for(col = [0:row])
+					for(hex_list = get_hex_center_points_tria(num_rows,num_cols))
 					{
-						translate([hex_w*(-col),0,0])
-							pick_hex();
+					// Iterate through each hex center and place a hex cell
+					translate([hex_list.x,hex_list.y,0])
+						pick_hex();
 					}
-				}
 				}
 				// Other unions
 				// Stacking Pins here
@@ -996,58 +1050,71 @@ module strip_insulator()
 	// intersection it with hexes
 	if(pack_style == "rect")
 	{
-		difference()
-		{
-			for(hex_list = get_hex_center_points_rect(num_rows,num_cols))
-			{
-			// Iterate through each hex center and place a hex cell
-			translate([hex_list.x,hex_list.y,0])
-				{	
-					intersection()
-					{
-						union()
-						{
-							// Hex block
-							hex(holder_height-slot_height + insulator_thickness, hex_pt + hextra);
-						}
-
-						union()
-						{
-							// 1st column slot
-							rotate([0,0,60])
-								translate([0,0,holder_height + slot_height])
-									cube([hex_w+1,col_slot_width-insulator_tolerance,4*slot_height], center=true);
-
-							// 2nd column slot
-							rotate([0,0,-60])
-								translate([0,0,holder_height + slot_height])
-									cube([hex_w+1,col_slot_width-insulator_tolerance,4*slot_height], center=true);
-
-							// Row slot
-							translate([0,0,holder_height + slot_height])
-								cube([hex_w+1,row_slot_width-insulator_tolerance,4*slot_height], center=true);
-						}
-						
-
-					}
-				}	
-			}
-
-			// cut out stacking bolt holes
-			if(stacking_bolts)
-			{
-				for(bolt_holes_list = concat(get_pin_holes_list_rect(num_rows,num_cols), get_pin_list_rect(num_rows,num_cols)))
-				{
-					// add hole
-					translate([bolt_holes_list.x,bolt_holes_list.y,0])
-						cylinder(d = stacking_bolt_dia, h = holder_height*2);
-				}
-			}
-		}
+		create_strip_insulator(get_hex_center_points_rect(num_rows,num_cols));
+	}
+	else if(pack_style == "para")
+	{
+		create_strip_insulator(get_hex_center_points_para(num_rows,num_cols));
+	}
+	else if(pack_style == "tria")
+	{
+		create_strip_insulator(get_hex_center_points_tria(num_rows,num_cols));
 	}
 
 }
 
+module create_strip_insulator(hex_list)
+{
+	difference()
+	{
+		// sorry
+		for(hex_list = hex_list)
+		{
+		// Iterate through each hex center and place a hex cell
+		translate([hex_list.x,hex_list.y,0])
+			{	
+				intersection()
+				{
+					union()
+					{
+						// Hex block
+						hex(holder_height-slot_height + insulator_thickness, hex_pt + hextra);
+					}
+
+					union()
+					{
+						// 1st column slot
+						rotate([0,0,60])
+							translate([0,0,holder_height + slot_height])
+								cube([hex_w+1,col_slot_width-insulator_tolerance,4*slot_height], center=true);
+
+						// 2nd column slot
+						rotate([0,0,-60])
+							translate([0,0,holder_height + slot_height])
+								cube([hex_w+1,col_slot_width-insulator_tolerance,4*slot_height], center=true);
+
+						// Row slot
+						translate([0,0,holder_height + slot_height])
+							cube([hex_w+1,row_slot_width-insulator_tolerance,4*slot_height], center=true);
+					}
+					
+
+				}
+			}	
+		}
+
+		// cut out stacking bolt holes
+		if(stacking_bolts)
+		{
+			for(bolt_holes_list = concat(get_pin_holes_list_rect(num_rows,num_cols), get_pin_list_rect(num_rows,num_cols)))
+			{
+				// add hole
+				translate([bolt_holes_list.x,bolt_holes_list.y,0])
+					cylinder(d = stacking_bolt_dia, h = holder_height*2);
+			}
+		}
+	}
+}
 // Generates a box section designed for one addition vertical pack stack. Can make sections larger if printer is able to print higher
 module vertical_box_section(num_stacks = 1)
 {
@@ -1065,19 +1132,19 @@ module vertical_box_section(num_stacks = 1)
 					union()
 					{
 						translate([0,0,box_wall+box_clearance])
-							rect_cap_positive(box_wall,box_clearance,vertical_box_section_height*num_stacks,box_wire_side_clearance,box_nonwire_side_clearance);
+							cap_positive(box_wall,box_clearance,vertical_box_section_height*num_stacks,box_wire_side_clearance,box_nonwire_side_clearance);
 						// lip addition
 						if(box_lip)
 						{
 							translate([0,0,-(box_wall - box_clearance)+box_lip_height])
-								rect_cap_positive(box_wall/2,box_clearance,box_lip_height,box_wire_side_clearance,box_nonwire_side_clearance);
+								cap_positive(box_wall/2,box_clearance,box_lip_height,box_wire_side_clearance,box_nonwire_side_clearance);
 						}
 					}
 					
 
 					// hollow out
 					translate([0,0,-box_lip_height-extra])
-						rect_cap_negative(box_wall,box_clearance,vertical_box_section_height*num_stacks*2,box_wire_side_clearance,box_nonwire_side_clearance);
+						cap_negative(box_wall,box_clearance,vertical_box_section_height*num_stacks*2,box_wire_side_clearance,box_nonwire_side_clearance);
 				}
 
 				if(box_lip)
@@ -1103,7 +1170,7 @@ module vertical_box_section(num_stacks = 1)
 			{	
 				// top lip cut
 				translate([0,0,vertical_box_section_height*num_stacks-box_lip_height])
-					rect_cap_negative(box_wall,box_clearance + box_wall/2,box_lid_height,box_wire_side_clearance,box_nonwire_side_clearance);
+					cap_negative(box_wall,box_clearance + box_wall/2,box_lid_height,box_wire_side_clearance,box_nonwire_side_clearance);
 			}
 			pick_hole_style();
 		}
@@ -1124,16 +1191,39 @@ module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 			// Generate -y side of supports
 			// if even, translate over half a hex
 			if(num_rows % 2 == 0)
+			{
+				if(pack_style == "rect")
+				{	
 				translate([get_hex_length(num_cols + 0.5),get_hex_length_pt(num_rows),0])
 					rotate([0,0,180])
 						lid_support(lid_support_height,spacer);
+				}
+				else if(pack_style == "para")
+				{
+				translate([get_hex_length(num_cols+num_rows/2 - 0.5),get_hex_length_pt(num_rows),0])
+					rotate([0,0,180])
+						lid_support(lid_support_height,spacer);
+				}
+			}
+				
 			else
-				translate([0,get_hex_length_pt(num_rows),0])
-					mirror([0,1,0])
-							lid_support(lid_support_height,spacer);
+			{
+				if(pack_style =="rect")
+				{
+					translate([0,get_hex_length_pt(num_rows),0])
+						mirror([0,1,0])
+								lid_support(lid_support_height,spacer);
+				}
+				else if(pack_style == "para")
+				{
+					translate([get_hex_length(num_rows/2+0.5),get_hex_length_pt(num_rows),0])
+						mirror([0,1,0])
+								lid_support(lid_support_height,spacer);
+				}
+			}
 		}
 		translate([0,0,-(box_wall/2 + extra)])
-			rect_cap_positive(box_wall/2,box_clearance,lid_support_height*2 ,box_wire_side_clearance,box_nonwire_side_clearance);
+			cap_positive(box_wall/2,box_clearance,lid_support_height*2 ,box_wire_side_clearance,box_nonwire_side_clearance);
 	}
 
 
@@ -1146,13 +1236,16 @@ module both_lid_supports(lid_support_height = box_lid_height, spacer = 0)
 // mirrored is used for the -y lid_support which will have different sizes due to different side clearances
 module lid_support(lid_support_height = box_lid_height,spacer = 0)
 {
+	// testing
+	//max_cols= pack_style == "rect"? num_cols:num_cols-1;	//if rect use num_cols, if para, use one less
+
 	for(col = [1:num_cols])
 	{
 		// iterate on one side
 		// add support in the shape of a hex inbetween cols
 				union()
 				{
-					translate([get_hex_length(col+0.5),-get_hex_length_pt(2)-box_clearance,-(box_wall + box_clearance)])
+					translate([get_hex_length(col+0.5),-get_hex_length_pt(2)-box_clearance,-(box_wall)])
 					hex(lid_support_height);
 					if(spacer)
 					{
@@ -1162,10 +1255,11 @@ module lid_support(lid_support_height = box_lid_height,spacer = 0)
 
 				}
 	}
+
 }
 
 
-// Picks the correct hole style based on configuration
+// Picks the correct hole style based on configuration and creates holes in boxes and lids
 module pick_hole_style(lid = false)
 {
 		// Other cutouts of entire box lid
@@ -1359,6 +1453,34 @@ function get_hex_center_points_rect(num_rows, num_cols)
 			row * 1.5 * (hex_pt)
 		]
 	];	// Closing function bracket
+
+// returns a list of the hex cell centers of a given num of rows and columns for rect packs.
+function get_hex_center_points_tria(num_rows, num_cols)
+= 	[
+		// Iterate through num of rows and cols
+		for(row = [0:num_rows-1],col = [0:row])
+		[	// X component of list member
+			row*(0.5 * hex_w) + hex_w*(-col)
+			,
+			// Y component of list member
+			row * 1.5 * (hex_pt)
+		]
+	];	// Closing function bracket
+
+// code from tria for
+// else if(pack_style == "tria")
+// 	{
+		
+// 		for(row = [0:num_rows-1])
+// 					{
+// 						translate([row*(0.5 * hex_w),1.5*(hex_pt)*row,0])
+// 						for(col = [0:row])
+// 						{
+// 							translate([hex_w*(-col),0,0])
+// 								pick_hex();
+// 						}
+// 					}
+// 	}
 
 // returns a list of all the positions of the pin holes for stacking pins
 function get_pin_holes_list_rect(num_rows,num_cols)
