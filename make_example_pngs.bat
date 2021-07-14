@@ -17,3 +17,4 @@ openscad -o Photos/holder_with_stacking_pins.png -D "part_type =\"normal\"" -D "
 openscad -o Photos/holder_with_stacking_bolt.png -D "part_type =\"normal\"" -D "part=\"flipped holder png\"" -D "pack_style=\"rect\"" -D stacking_bolts=true %rows% %color% hex_cell.scad
 openscad -o Photos/rect_box_and_lid.png -D "part_type =\"both\"" -D "part=\"box bottom\"" -D "pack_style= \"rect\"" %rows% %color% hex_cell.scad
 openscad -o Photos/para_box_and_lid.png -D "part_type =\"both\"" -D "part=\"box bottom\"" -D "pack_style= \"para\"" %rows% %color% hex_cell.scad
+openscad -o Photos/assembled.png -D "part_type =\"assembled\"" %rows% %color% hex_cell.scad
