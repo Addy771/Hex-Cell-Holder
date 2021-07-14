@@ -2,6 +2,7 @@
 A parametric OpenSCAD project to generate STLs models of hexagonal lithium cell holders, boxes, and caps to be 3d printed.
 
 ![Parametric](Photos/hex_cell.gif)
+![Assembled](Photos/assembled.png)
 ![EBike battery pieces](Photos/ebike_holders.jpg)
 8p Packs for an ebike
 ![Ebike Battery box](Photos/ebike_box.jpg)
