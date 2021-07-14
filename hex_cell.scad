@@ -21,17 +21,17 @@ wall = 1.6;       // Wall thickness around a single cell. Make as a multiple of 
 					// If using bought injection molded hexes and printing out the boxes, take the distance between the centers of 2 cells and divide by two for the wall thickness (((((pitch - diameter)/2). Add space for the protuding interlocking tabs in the cap or box clearances.
 
 
-num_rows = 3;
+num_rows = 4;
 num_cols = 8;
 
 holder_height = 10; // Height of cell holder default = 10 (not including slot_height)
-slot_height = 3;  // Height of all slots default = 3 mm
+slot_height = 3;  // Height of all slots default = 3 mm (set to 0 for no slots but that allows you to print without support)
 
 
 col_slot_width = 8; // Width of slots between rows default = 8
 row_slot_width = 8; // Width of slots along rows default = 8
 
-cell_top_overlap = 3; // How big the opening overlaps the cell default = 3
+
 
 pack_style = "rect";	// "rect" for rectangular pack, "para" for parallelogram, "tria" for triangle shaped pack (number of rows define the amount of rows at the bottom of the triangle. Columns get ignored)
 
@@ -44,7 +44,7 @@ box_style = "both";		// "bolt" for bolting the box pack together
 
 part_type = "normal";   // "normal","mirrored", or "both". "assembled" is used for debugging.  You'll want a mirrored piece if the tops and bottom are different ( ie. When there are even rows in rectangular style or any number of rows in parallelogram. The Console will tell you if you need a mirrored piece).
 
-part = "testing";   		// "holder" to generate cell holders,
+part = "box lid";   		// "holder" to generate cell holders,
 						// "cap" to generate pack end caps,
 						// "box lid" to generate box lid
 						// "box bottom" for box bottom
@@ -57,7 +57,7 @@ part = "testing";   		// "holder" to generate cell holders,
 
 box_lip = true;			// Adds a lip to the box pieces. default = true.
 wire_clamp_add = true; 	// Adds a wire exit hole out the side of the box lid.
-
+insulator_as_support = false;	// Print the insulator as a part of the holder support material.
 
 cap_wall = 1.2;				// Cap wall thickness (default = 1.2 recommend to make a multiple of nozzle dia)
 cap_clearance = 0.2;		// Clearance between holder and caps default = 0.2
@@ -71,6 +71,10 @@ bms_clearance = 10; 			// Vertical space for the battery management system (bms)
 box_bottom_clearance = 0;	// Vertical space for wires on bottom of box
 box_wire_side_clearance = 3; // Horizontal space from right side (side with wire hole opening) to the box wall for wires
 box_nonwire_side_clearance = 0; // Horizontal space from left side (opposite of wire hole) to the box wall for wires
+
+support_z_gap = 0.3;		// Insulator gap to holder. default 0.3
+insulator_tolerance = 1.5;	// How much smaller to make the width of the insulator default 1.5
+insulator_thickness = (slot_height-support_z_gap);	// Thickness of insulator
 
 wire_diameter = 5;			// Diameter of 1 power wire used in the strain relief clamps default = 5 for 10 awg stranded silicon wire
 wire_clamp_bolt_dia = 3;	// Bolt dia used for clamping wire default = 3 for M3 bolt
@@ -106,6 +110,7 @@ num_pack_stacks = 1;	// How many additional packs you will stack vertically. Aff
 // ADVANCED CONFIGURATION for users that need to customize everything
 //////////////////////////////////////////////////////////////////////////////////
 
+cell_top_overlap = 3; // How big the opening overlaps the cell default = 3
 opening_dia = cell_dia-cell_top_overlap*2;   		// Circular opening to expose cell
 separation = 1;   			// Separation between cell top and wire slots (aka tab thickness) default = 1
 wire_hole_width = 15;		// Width of wire hole default = 15
@@ -116,12 +121,11 @@ bolt_dia_clearance = 1;		// Amount of extra diameter for bolt holes default = 1
 box_lip_height = box_wall * 0.75;	// Height of lip default = box_wall * 0.75
 box_lip_width = box_wall * 0.5;		// Width of lip default = box_wall * 0.5
 stacking_pins_tolerance = 0.5;	// How much larger for the stacking pin hole compared to it's pin diameter
-spacer_overhang = box_clearance + 3; 		// Amount of spacer overhang to hold the holders
+spacer_overhang = box_clearance + 3; 		// Amount of spacer overhang to hold the holders default = 3
 
-insulator_as_support = true;	// EXPERIMENTAL Print the insulator as a part of the holder support material. 
-support_z_gap = 0.4;		// Insulator gap to holder.
-insulator_tolerance = 1.5;	// How much smaller to make the width of the insulator default 1.5
-insulator_thickness = (slot_height-support_z_gap);	// Thickness of insulator default slot_height - 0.5
+flip_holders = false;	// Mostly used for taking pngs
+
+
 
 // cell_tab_width = 5;			// Width of tab that keeps the cell in the holder default = 5
 // cell_tab_length = 3;		// Approx Length of tab that keeps the cell in the holder default = 3
@@ -138,7 +142,7 @@ insulator_thickness = (slot_height-support_z_gap);	// Thickness of insulator def
 // [x] Vertical Stacking Bolts
 // [x] Add insulators
 //	[x] rect support
-//	[] other styles support
+//	[x] other styles support
 // [x] Fixed boxes spacers
 // [x] Add vertical stacking boxes
 // [x] Add insulator to bat file
@@ -168,15 +172,12 @@ box_wall_x = box_wall * cos(30);			// Used whenever we are translating in the x 
 wire_clamp_support = hex_pt + box_clearance + box_wall - wire_hole_width/2 ;		// Place for strain relief clamp to screw into
 wire_clamp_nib_dia = 5;
 
-// Flip upside down for proper print orientation
-
-
 	if (part_type == "mirrored")
 	{
 		if (part == "cap")
 		{
 			mirror([0,1,0])
-				cap();
+				cap(cap_wall,cap_clearance);
 		}
 		else if (part == "holder")
 		{
@@ -189,50 +190,49 @@ wire_clamp_nib_dia = 5;
 	{
 		if (part == "cap")
 		{
-			cap();
+			cap(cap_wall,cap_clearance);
 			mirror([0,1,0])
-			translate([0,2*hex_pt + 2 * (cap_wall + cap_clearance) + spacing,0])
-				cap();
+				translate([0,2*hex_pt + 2 * (cap_wall + cap_clearance) + spacing,0])
+					cap(cap_wall,cap_clearance);
 		}
 		else if (part == "holder")
 		{
-			rotate([0, 180, 0]) 
+			
+			//rotate([0, 180, 0]) //flips around all the holders
 			{
 				// First holder
 				holders();
 				// Second holder
-				if(num_rows % 2 == 1)   // If odd pack move pack over to nest properly
+				if(pack_style == "para")
 				{
-								
-									if (part == "holder")
-									{	
-										if(stacking_bolts)
-										{
-											mirror([1,0,0])	// mirrored for bolt stacking holes
-												rotate([0,0,180])
-													translate([-(hex_w*0.5), (1.5*(hex_pt) + spacing),0])
-													holders();
-													
-										}
-										else	// not mirrored for anything but bolt stacking holes
-										{
-											rotate([0,0,0])
-												translate([-(hex_w*0.5), -(1.5*(hex_pt) * num_rows+ spacing),0])
-													holders();
-										}
-									}
+					mirror([0,1,0])
+						translate([hex_w*0.5,1.5*hex_pt + spacing,0])
+							holders();
 				}
-				else	// if even pack
+				else if(pack_style == "rect")
 				{
-					
-						if (part == "holder")
+					if(num_rows % 2 == 1)   // If odd pack move pack over to nest properly
+					{
+						if(stacking_bolts)
 						{
+							mirror([1,0,0])	// mirrored for bolt stacking holes
+								rotate([0,0,180])
+									translate([-(hex_w*0.5), (1.5*(hex_pt) + spacing),0])
+									holders();
+									
+						}
+						else	// not mirrored for anything but bolt stacking holes
+						{
+								translate([-(hex_w*0.5), -(1.5*(hex_pt) * num_rows+ spacing),0])
+									holders();
+						}
+					}
+					else	// if even pack
+					{
 						mirror([0,1,0])	// mirrored for bolt stacking holes
 							translate([hex_w*0.5,1.5*hex_pt + spacing,0])
-							{
 								holders();
-							}
-						}
+					}
 				}
 			}
 		}
@@ -364,10 +364,10 @@ wire_clamp_nib_dia = 5;
 	{
 		if (part == "cap")
 		{
-			cap();
+			cap(cap_wall,cap_clearance);
 		}
 		else if (part == "holder")
-			rotate([0,180,0])
+			rotate([0,0,0])
 			{
 				holders();
 			}
@@ -376,7 +376,7 @@ wire_clamp_nib_dia = 5;
 		else if (part == "box lid")
 		{
 			translate([0,get_hex_center_y_length(num_cols),0])
-			mirror([0,0,1])
+			mirror([0,0,1])	
 				rotate([180,0,0])
 					box_lid();
 		}
@@ -394,6 +394,11 @@ wire_clamp_nib_dia = 5;
 		{
 			vertical_box_section(num_pack_stacks);
 		}
+		else if(part == "flipped holder png")
+		{
+			rotate([0,180,0])
+				holders();
+		}
 		else if(part == "testing")
 		{
 		translate([0,0,0])
@@ -406,7 +411,8 @@ wire_clamp_nib_dia = 5;
 		translate([0,-get_hex_center_y_length(num_rows+2)*2 - (box_wall + box_clearance)*4,0])
 			vertical_box_section();
 		}
-}
+	}
+
 
 
 
@@ -454,7 +460,7 @@ if (pack_style == "tria" && (part == "box lid" || part == "box bottom" || part =
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-module cap(cap_wall,cap_clearance,cap_height = holder_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
+module cap(cap_wall,cap_clearance,cap_height = holder_height+slot_height,positive_x = 0, negative_x = 0, positive_y = 0, negative_y = 0)
 {
 	difference()
 	{
@@ -1123,7 +1129,7 @@ module both_box_holder_supports(lid_support_height = box_lid_height, spacer = 0)
 				}
 			}
 				
-			else
+			else	// if odd
 			{
 				if(pack_style =="rect")
 				{
@@ -1170,7 +1176,7 @@ module box_holder_support(lid_support_height = box_lid_height,spacer = 0)
 						intersection()
 						{
 							translate([0,0,0])
-								cube([hex_w/2,100,box_lid_height*100],center = true);
+								cube([hex_w/2,hex_pt * 2 + spacer_overhang,(spacer+box_wall)*3],center = true);
 							hex(spacer+box_wall);
 						}
 						
