@@ -51,6 +51,7 @@ part = "holder";   		// "holder" to generate cell holders,
 
 box_lip = true;			// Adds a lip to the box pieces. default = true.
 wire_clamp_add = true; 	// Adds a wire exit hole out the side of the box lid.
+insulator_as_support = true;	// Print the insulator as a part of the holder support material.
 
 cap_wall = 1.2;				// Cap wall thickness (default = 1.2 recommend to make a multiple of nozzle dia)
 cap_clearance = 0.2;		// Clearance between holder and caps default = 0.2
