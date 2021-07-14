@@ -1,6 +1,6 @@
 // Generate a tool for checking optimal cell fit
 
-size_list = [18.0,18.2,18.4,18.6];
+size_list = [18.0,18.2,18.4,18.6]; // Add size to test in this array.
 
 wall_thickness = 1.6;
 cell_depth = 10;
