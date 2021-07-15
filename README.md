@@ -60,3 +60,7 @@ There are some options for stacking packs vertically. Stacking pins/holes allow 
 ![Stackingbolts](Photos/holder_with_stacking_bolt.png)
 
 You can print out vertical box sections which increase the box height by one stack each.
+
+# Donation/Photos
+If you wish to donate you can use paypal.me/phana762 or bc1qhmggnntyk0vyvqffhl90nl532qqffa2dc3la5y for BTC. Thank you! 
+We would love to see your battery builds too! Send us a photo/make at https://www.thingiverse.com/thing:3029966
