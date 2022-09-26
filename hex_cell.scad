@@ -413,6 +413,7 @@ wire_clamp_nib_dia = 5;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 // echos and info
+echo(hex_cell_center_to_center_distance = get_hex_center_x_length(2));
 echo(pack_height_holder = get_mock_pack_height());
 echo(box_lid_height = box_lid_height);
 echo(box_bottom_height = box_bottom_height);
